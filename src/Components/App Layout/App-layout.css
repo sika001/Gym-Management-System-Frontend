@@ -1,0 +1,14 @@
+.app-container {
+    display: flex;
+    flex-direction: row;
+    /* justify-content: space-between; */
+    margin-left: 5px;
+    width: 100%;
+}
+
+.main-container {
+    position: relative;
+    margin-left: 10%;
+    margin-right: 10%;
+    width: 100%;
+}

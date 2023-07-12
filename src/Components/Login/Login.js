@@ -4,7 +4,7 @@ import Button from "@mui/material/Button";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Login.css";
-
+import { validateForm } from "../../Utilities/RegExpValidators/validators";
 // const handleSubmit = async () => {
 //     //OVO FJU IZMIJENITI DA SE DOVLACE PODACI KAD SE NEKO LOG-IN -uje
 //     //dodati na dugme submit eventlistener
@@ -36,16 +36,6 @@ function Login() {
 
         const formType = event.target.name === "emailForm" ? "emailForm" : "passwordForm";
         setIsValidPassword(validateForm(password, formType));
-    };
-
-    const validateForm = (data, formType) => {
-        const emailRegExp = /^[A-Za-z0-9+\-_~]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-        const regExp = formType === "emailForm" ? emailRegExp : passwordRegex;
-        const isValid = regExp.test(data);
-
-        return isValid;
     };
 
     const handleBlur = () => {

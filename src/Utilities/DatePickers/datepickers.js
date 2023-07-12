@@ -1,16 +1,20 @@
 import * as React from "react";
-import { LocalizationProvider, DateTimePicker } from "@mui/x-date-time-picker";
-import DateAdapter from "@mui/lab/AdapterMoment";
-import Localization from "@mui/x-date-time-picker/src/localization/en";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-function BasicDatepicker() {
+function BasicDatePicker(props) {
     return (
-        <LocalizationProvider dateAdapter={DateAdapter} localization={Localization}>
-            <DateTimePicker
-            // your DateTimePicker props here
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+                onChange={props.handleDateChange}
+                value={props.date}
+                format="DD-MM-YYYY"
+                label={props.label}
+                className={props.className}
             />
         </LocalizationProvider>
     );
 }
 
-export default BasicDatepicker;
+export default BasicDatePicker;

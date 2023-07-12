@@ -5,21 +5,23 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Typography from "@mui/material/Typography";
 
-const steps = ["Select campaign settings", "Create an ad group", "Create an ad"];
-
 function HorizontalStepperWithError(props) {
     const isStepFailed = (step) => {
-        return step === 1;
+        return false;
     };
+    // const handleClick = (event) => {
+    //     console.log("CLICKED", event.target);
+    // };
+    // const [hover, setHover] = React.useState(false);
     return (
         <Box sx={{ width: "100%" }}>
             <Stepper activeStep={props.activeStep}>
-                {steps.map((label, index) => {
+                {props.steps.map((label, index) => {
                     const labelProps = {};
                     if (isStepFailed(index)) {
                         labelProps.optional = (
                             <Typography variant="caption" color="error">
-                                Alert message
+                                {props.errorMessage}
                             </Typography>
                         );
 
@@ -27,7 +29,15 @@ function HorizontalStepperWithError(props) {
                     }
 
                     return (
-                        <Step key={label}>
+                        <Step
+                            key={label}
+                            // onClick={handleClick}
+                            // onMouseEnter={() => setHover(true)}
+                            // onMouseLeave={() => setHover(false)}
+                            // style={
+                            //     hover ? { cursor: "pointer", backgroundColor: "red" } : null
+                            // }
+                        >
                             <StepLabel {...labelProps}>{label}</StepLabel>
                         </Step>
                     );

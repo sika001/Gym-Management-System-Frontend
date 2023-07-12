@@ -1,12 +1,20 @@
-import membersService from "../../Services/members-service";
 import { useLoaderData } from "react-router-dom";
 import DataTable from "../../Utilities/Data Table/Data-table";
 import moment from "moment";
+import axios from "axios";
+import environment from "../../environment";
+
+const api_url = environment.api_url;
 
 export async function loader() {
-    const members = await membersService.getMembersData();
+    try {
+        const response = await axios.get(`${api_url}/membership`);
 
-    return members;
+        return response.data;
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
 }
 
 function Members() {

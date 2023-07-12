@@ -1,6 +1,7 @@
 import { useLoaderData } from "react-router-dom";
-import clientService from "../../Services/client-service";
 import DataTable from "../../Utilities/Data Table/Data-table";
+import axios from "axios";
+import environment from "../../environment";
 
 function Client() {
     //OVO NAPRAVITI DA RADI
@@ -13,10 +14,18 @@ function Client() {
     );
 }
 
-export async function loader() {
-    const clients = await clientService.getClients();
+const api_url = environment.api_url;
 
-    return clients;
+export async function loader() {
+    //PROVJERITI RADI LI
+    try {
+        const response = await axios.get(`${api_url}/client`);
+
+        return response.data;
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
 }
 
 export default Client;

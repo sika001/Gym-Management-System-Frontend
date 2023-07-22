@@ -114,6 +114,7 @@ function PersonalInfoRegister(props) {
     const handleGymChange = (event) => {
         const gymVal = event.target.value;
         setGym(gymVal);
+        props.handleGym(gymVal); //pushes gym info to parent component
     };
 
     const handleBlur = () => {

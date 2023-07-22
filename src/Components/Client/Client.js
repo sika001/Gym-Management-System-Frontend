@@ -19,7 +19,7 @@ const api_url = environment.api_url;
 export async function loader() {
     //PROVJERITI RADI LI
     try {
-        const response = await axios.get(`${api_url}/client`);
+        const response = await axios.get(`${api_url}/client`, { withCredentials: true });
 
         return response.data;
     } catch (err) {

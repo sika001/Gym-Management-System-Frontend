@@ -1,15 +1,18 @@
 import { useLoaderData } from "react-router-dom";
 import DataTable from "../../Utilities/Data Table/Data-table";
 import moment from "moment";
-import axios from "axios";
 import environment from "../../environment";
+import { useEffect } from "react";
+import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
 
 const api_url = environment.api_url;
 
 export async function loader() {
     try {
-        const response = await axios.get(`${api_url}/membership`);
-
+        const response = await jwtInterceptor.get(`${api_url}/membership`, {
+            withCredentials: true,
+        });
+        console.log("response", response.data);
         return response.data;
     } catch (err) {
         console.log(err);
@@ -20,12 +23,34 @@ export async function loader() {
 function Members() {
     const members = useLoaderData(); //fetches data from loader function
 
+    const updateExpiredMemberships = async () => {
+        try {
+            const response = await jwtInterceptor.put(`${api_url}/membership`, null, {
+                withCredentials: true,
+            });
+            console.log("Updated expired memberships", response.data);
+        } catch (err) {
+            console.log("Error while trying to update expired memberships", err);
+        }
+    };
+
+    useEffect(() => {
+        updateExpiredMemberships();
+    }, []);
+
     const rows = members.map((member, index) => {
         const memberAge = calculateAge(member.DateOfBirth);
         const startDate = moment(member.Start).format("DD/MM/YYYY");
-        return { ...member, id: index, Age: memberAge, Start: startDate }; //dodajemo id da bi mogli prikazati redni broj, a ostalo sve iz members ostaje isto
+        const expiresIn = moment(member.End).diff(member.Start, "days"); //number of days until membership expires
+        return {
+            ...member,
+            id: index + 1,
+            Age: memberAge,
+            Start: startDate,
+            "Valid (days)": expiresIn,
+            // Status: expiresIn > 0 ? "Active" : "Expired",
+        }; //dodajemo id da bi mogli prikazati redni broj, a ostalo sve iz members ostaje isto
     });
-
     //rows and cols are passed as props to DataTable component
     const columns = [
         //field names must be the same as the names of the properties in the object
@@ -37,11 +62,6 @@ function Members() {
             headerName: "Age",
             width: 90,
         },
-        // {
-        //     field: "DateOfBirth",
-        //     headerName: "Date of birth",
-        //     width: 130,
-        // },
         {
             field: "Phone",
             headerName: "Phone",

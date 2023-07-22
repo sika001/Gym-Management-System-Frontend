@@ -26,6 +26,7 @@ function Register() {
     const [workout, setWorkout] = useState({});
     const [membership, setMembership] = useState({});
     const [personalCoach, setPersonalCoach] = useState({});
+    const [gym, setGym] = useState({});
 
     const handleClient = (newClient) => {
         setClient(newClient);
@@ -47,6 +48,10 @@ function Register() {
         setPersonalCoach(personalCoach);
     };
 
+    const handleGym = (gym) => {
+        setGym(gym);
+    };
+
     return (
         <>
             <h1>Register component</h1>
@@ -63,6 +68,7 @@ function Register() {
                     <PersonalInfoRegister
                         handleStepValue={handleStepValue}
                         handleClient={handleClient}
+                        handleGym={handleGym}
                     />
                 )}
                 {step === 1 && (
@@ -85,6 +91,7 @@ function Register() {
                         handleWorkout={handleWorkout}
                         handleMembership={handleMembership}
                         handlePersonalCoach={handlePersonalCoach}
+                        gym={gym}
                     />
                 )}
 

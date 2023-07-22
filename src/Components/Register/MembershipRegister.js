@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import Button from "@mui/material/Button";
 import environment from "../../environment";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function MembershipRegister(props) {
     const [workoutData, setWorkoutData] = useState([]); //workout programs are array of objects
@@ -31,6 +32,8 @@ function MembershipRegister(props) {
 
     const [isSubmitted, setIsSubmitted] = useState(false); //state that tracks when a form is submitted
     const [successClient, setSuccessClient] = useState(false); //state that tracks when a client is added to the database
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const getWorkoutProgramsData = axios
@@ -62,16 +65,12 @@ function MembershipRegister(props) {
     const api_url = environment.api_url;
     useEffect(() => {
         const getMembershipTypeData = axios
-            .get(`${api_url}/membership-type`)
+            .get(`${api_url}/membership-type/${props.gym.ID}`) //gets membership types for the corresponding gym
             .then((res) => {
                 setMembershipTypeData(res.data.recordset);
             })
             .catch((err) => console.log(err));
     }, []);
-
-    useEffect(() => {
-        console.log("Membership Type", membershipType);
-    }, [membershipType]);
 
     const handleMembershipTypeChange = (event) => {
         setMembershipType(event.target.value);
@@ -82,7 +81,6 @@ function MembershipRegister(props) {
     }
 
     function handleCoachChange(event) {
-        console.log("COACH", event.target.value);
         const selectedCoachID = event.target.value.ID;
         setCoach(event.target.value);
     }
@@ -106,7 +104,6 @@ function MembershipRegister(props) {
     }
 
     useEffect(() => {
-        console.log("SUBMIT USEEFFECT", isSubmitted);
         if (!isSubmitted) return;
 
         const register = axios
@@ -117,6 +114,8 @@ function MembershipRegister(props) {
 
                 setFK_ClientID(res.data.rolePerson.FK_ClientID); //this will be used to add FK_ClientID to membership object
                 setSuccessClient(true);
+
+                navigate("/login");
             })
             .catch((err) => console.log("ERROR while trying to register", err));
 
@@ -126,11 +125,8 @@ function MembershipRegister(props) {
     useEffect(() => {
         if (!successClient) return;
 
-        console.log("TRYING TO ADD MEMBERSHIP DATA: SUCCESS CLIENT:", successClient);
-        // handleMembership(); //sends membership object to parent component
-        // if (checked) {
-        //     setRegisterObject((registerObject) => ({ ...registerObject, FK_EmployeeID: coach.ID })); //prev value is spreaded, and new value is added
-        // }
+        // console.log("TRYING TO ADD MEMBERSHIP DATA: SUCCESS CLIENT:", successClient);
+
         //if successful, add Client ID to membership object,
         const membershipRes = axios
             .post(`${api_url}/membership`, {
@@ -206,7 +202,7 @@ function MembershipRegister(props) {
         }));
 
         setTrigger(true);
-        console.log("HANDLE CLIENT PROBAO, REGISTER OBJECT: ", registerObject);
+        // console.log("HANDLE CLIENT PROBAO, REGISTER OBJECT: ", registerObject);
     };
 
     let coachRendered = [];

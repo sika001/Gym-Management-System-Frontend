@@ -1,26 +1,20 @@
 // import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Login.css";
 import { validateForm } from "../../Utilities/RegExpValidators/validators";
-// const handleSubmit = async () => {
-//     //OVO FJU IZMIJENITI DA SE DOVLACE PODACI KAD SE NEKO LOG-IN -uje
-//     //dodati na dugme submit eventlistener
-//     const loginData = await loginService.login();
-//     console.log(loginData);
-//     return loginData;
-// };
+import AuthContext from "../Auth Context/AuthContext";
 
 function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const [isValidEmail, setisValidEmail] = useState(true);
     const [isValidPassword, setIsValidPassword] = useState(true);
-
     const [isBlured, setIsBlured] = useState(false); //state that tracks when a form is out of focus
+
+    const { login } = useContext(AuthContext);
 
     const handleEmailChange = (event) => {
         const email = event.target.value;
@@ -42,6 +36,13 @@ function Login() {
         setIsBlured(true);
     };
 
+    async function loginSubmit() {
+        let payload = {
+            Email: email,
+            Password: password,
+        };
+        await login(payload);
+    }
     return (
         <form className="login-container">
             <div className="greeting">
@@ -77,13 +78,13 @@ function Login() {
                     className="submit-btn"
                     variant="outlined"
                     size="large"
-                    type="submit"
                     disabled={
                         !isValidPassword ||
                         !isValidEmail ||
                         email.length === 0 ||
                         password.length === 0
                     }
+                    onClick={loginSubmit}
                 >
                     Login
                 </Button>

@@ -3,18 +3,21 @@ import { DataGrid } from "@mui/x-data-grid";
 
 export default function DataTable(props) {
     return (
-        <div style={{ height: 500, width: "100%" }}>
+        <div style={props.style}>
             <DataGrid
                 rows={props.rows}
                 columns={props.columns}
                 initialState={{
                     pagination: {
                         paginationModel: { page: 0, pageSize: 10 },
+                        autoPageSize: true,
                     },
                 }}
                 pageSizeOptions={[5, 10]}
-                pagination
-                checkboxSelection
+                loading={props.loading}
+                checkboxSelection={false}
+                onRowDoubleClick={props.onRowDoubleClick}
+                hideFooterSelectedRowCount={true}
             />
         </div>
     );

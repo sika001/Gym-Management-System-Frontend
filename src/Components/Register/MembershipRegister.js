@@ -6,9 +6,10 @@ import ColorCheckbox from "../../Utilities/Checkbox/Checkbox";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import Button from "@mui/material/Button";
-import environment from "../../environment";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import moment from "moment";
+import { useSnackbar } from "notistack";
 
 function MembershipRegister(props) {
     const [workoutData, setWorkoutData] = useState([]); //workout programs are array of objects
@@ -24,11 +25,43 @@ function MembershipRegister(props) {
     const [isBluredMem, setIsBluredMem] = useState(false); //state that tracks when a form is out of focus
     const [isBluredCoach, setIsBluredCoach] = useState(false); //state that tracks when a form is out of focus
 
-    const [registerObject, setRegisterObject] = useState({
-        ...props.client, //client object from parent component
-        Email: props.role.Email, //for role table
-        Password: props.role.Password,
-    }); //object that will be sent to the database
+    //data to /register is being sent over FormData, beacuse of the file upload
+    const [registerFormData, setRegisterFormData] = useState(null); //object that will be sent to the database
+
+    const { enqueueSnackbar } = useSnackbar(); //this is used for displaying a snackbar message
+    const showSnackbarMessage = (variant, message) => () => {
+        // variant could be success, error, warning, info, or default
+        enqueueSnackbar(message, {
+            variant,
+            autoHideDuration: 2000,
+            anchorOrigin: { vertical: "top", horizontal: "center" }, //snackbar position
+        });
+    };
+
+    useEffect(() => {
+        if (registerFormData) return;
+
+        const registerFD = new FormData();
+        //append client and role data to registerFormData
+        registerFD.append("Name", props.client.get("Name"));
+        registerFD.append("Surname", props.client.get("Surname"));
+        registerFD.append("DateOfBirth", props.client.get("DateOfBirth"));
+        registerFD.append("Address", props.client.get("Address"));
+        registerFD.append("City", props.client.get("City"));
+        registerFD.append("Country", props.client.get("Country"));
+        registerFD.append("Phone", props.client.get("Phone"));
+        registerFD.append("Picture", props.client.get("Picture"));
+        registerFD.append("PictureName", props.client.get("PictureName"));
+
+        registerFD.append("Email", props.role.get("Email"));
+        registerFD.append("Password", props.role.get("Password"));
+
+        //registerFormData now contains client and role data from previous steps
+
+        console.log("REGISTER FORM DATA NA STARTU: ", ...registerFD);
+
+        setRegisterFormData(registerFD);
+    }, []);
 
     const [isSubmitted, setIsSubmitted] = useState(false); //state that tracks when a form is submitted
     const [successClient, setSuccessClient] = useState(false); //state that tracks when a client is added to the database
@@ -62,7 +95,8 @@ function MembershipRegister(props) {
         setWorkout(event.target.value);
     };
 
-    const api_url = environment.api_url;
+    const api_url = process.env.REACT_APP_API_URL;    
+    
     useEffect(() => {
         const getMembershipTypeData = axios
             .get(`${api_url}/membership-type/${props.gym.ID}`) //gets membership types for the corresponding gym
@@ -93,55 +127,92 @@ function MembershipRegister(props) {
     }, []);
 
     function handleMembership() {
-        const membership = {
-            // Status: membershipType.Status, //Status or Valid (STA TREBA)
-            StartDate: new Date(),
-            FK_MembershipTypeID: membershipType.ID,
-        };
+        registerFormData.append("StartDate", moment(new Date()).format("YYYY-MM-DD HH:mm:ss"));
+        registerFormData.append("FK_MembershipTypeID", membershipType.ID);
 
-        setRegisterObject((registerObject) => ({ ...registerObject, ...membership })); //prev value is spreaded, and new value is added
-        props.handleMembership(membership);
+        console.log("REGISTER FORM DATA SA MEMBERSHIP: ", ...registerFormData);
     }
 
     useEffect(() => {
         if (!isSubmitted) return;
 
-        const register = axios
-            .post(`${api_url}/register`, registerObject)
-            .then((res) => {
-                //if successful, add Client ID to membership object,
-                console.log("Client added SUCCESSFULLY", res.data);
+            //sending form data to the backend
+            console.log("REGISTER FORM DATA: ", ...registerFormData);
+            const register = axios
+                .post(`${api_url}/register`, registerFormData, {
+                    headers: {
+                        "Content-Type": "multipart/form-data", // Important: Set the content type to 'multipart/form-data'
+                    },
+                })
+                .then((res) => {
+                    //if successful, add Client ID to membership object,
+                    console.log("Client added SUCCESSFULLY", res.data);
 
-                setFK_ClientID(res.data.rolePerson.FK_ClientID); //this will be used to add FK_ClientID to membership object
-                setSuccessClient(true);
+                    setFK_ClientID(res.data.rolePerson.FK_ClientID); //this will be used to add FK_ClientID to membership object
+                    setSuccessClient(true);
+                })
+                .catch((err) => showSnackbarMessage("error", "Error while trying to register")());
 
-                navigate("/login");
-            })
-            .catch((err) => console.log("ERROR while trying to register", err));
-
-        setIsSubmitted(false); //reset state
+            setIsSubmitted(false); //reset state
     }, [isSubmitted]);
 
+    const convertFormDataToJSON = (formData) => {
+        let obj = {};
+        for (let key of formData.keys()) {
+            obj[key] = formData.get(key);
+        }
+        return obj;
+    };
+
     useEffect(() => {
-        if (!successClient) return;
-
+        if (!successClient) {
+            return;
+        }
         // console.log("TRYING TO ADD MEMBERSHIP DATA: SUCCESS CLIENT:", successClient);
+        const currDateTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
 
+        const membership = convertFormDataToJSON(registerFormData);
         //if successful, add Client ID to membership object,
         const membershipRes = axios
             .post(`${api_url}/membership`, {
                 FK_ClientID: FK_ClientID, //this state is from registering a client (useEffect above)
                 Status: 1,
-                ...registerObject,
+                ...membership,
             })
-            .then((res) => console.log("Membership added", res.data))
-            .catch((err) => console.log("ERROR while trying to register membership", err));
+            .then((res) => {
+                console.log("Membership added", res.data);
+
+                //make a transaction
+                axios
+                    .post(`${api_url}/transaction`, {
+                        Amount: checked
+                            ? membershipType.Price + coach.EmployeePrice
+                            : membershipType.Price,
+                        Date: currDateTime,
+                        FK_TransactionTypesID: 1, //1 - membership renewal
+                        FK_ClientID: FK_ClientID,
+                        FK_EmployeeID: null,
+                    })
+                    .then((res) => {
+                        showSnackbarMessage("success", "Successfully bought a membership!")();
+                        navigate("/login");
+                    })
+                    .catch((err) => {
+                        showSnackbarMessage("error", "Error while trying to buy a membership!")();
+                        console.log("Error while trying to buy a membership", err);
+                    });
+            })
+
+            .catch((err) => {
+                console.log("ERROR while trying to register membership", err);
+            });
         //dont need to spread entire registerObject, only need membership details
 
         setSuccessClient(false); //reset state
     }, [successClient]);
 
-    function handleSubmit() {
+    function handleSubmit(event) {
+        console.log("SUBMIT PROSAO");
         setIsSubmitted(true);
         //useEffect hook above, will take take care of sending data to the database
     }
@@ -160,8 +231,6 @@ function MembershipRegister(props) {
 
     const [trigger, setTrigger] = useState(false); //used to trigger useEffect below, - used so that FK_WorkoutID is not overriden in handleClient function
 
-    const [coachPrice, setCoachPrice] = useState(0);
-
     function replaceFK_WorkoutID() {
         //when a person chooses private coach, switches original workout, to the one with the corresoponding coach
         const selectedWorkout = workoutData.find(
@@ -171,12 +240,11 @@ function MembershipRegister(props) {
 
         if (selectedWorkout) {
             props.handleWorkout(selectedWorkout);
-            setRegisterObject((registerObject) => {
-                return {
-                    ...registerObject,
-                    FK_WorkoutID: selectedWorkout.ID,
-                };
-            });
+
+            if (!checked) {
+                registerFormData.append("FK_WorkoutID", selectedWorkout.ID);
+                console.log("REGISTER FORM DATA SA FK_WRKID REPLACE: ", ...registerFormData);
+            }
         }
         setTrigger(false); //resets state
     }
@@ -194,15 +262,11 @@ function MembershipRegister(props) {
     const handleClient = () => {
         props.handleClient({ ...props.client });
 
-        setRegisterObject((registerObject) => ({
-            ...registerObject,
-            ...props.client,
-            FK_WorkoutID: !checked ? workout.ID : null,
-            //if it's not checked, that means it's a group workout, so we need to add FK_WorkoutID, otherwise replaceFK_WorkoutID will take care of it
-        }));
+        if (!checked) registerFormData.append("FK_WorkoutID", workout.ID);
+
+        console.log("REGISTEr FORM DATA SA FK_WRKID: ", ...registerFormData);
 
         setTrigger(true);
-        // console.log("HANDLE CLIENT PROBAO, REGISTER OBJECT: ", registerObject);
     };
 
     let coachRendered = [];
@@ -283,7 +347,7 @@ function MembershipRegister(props) {
                             ) : null
                         )}
                     </Select>
-                    <FormHelperText>Choose a Professional</FormHelperText>
+                    <FormHelperText>Odaberi trenera</FormHelperText>
                 </FormControl>
             )}
 
@@ -301,13 +365,13 @@ function MembershipRegister(props) {
                         </MenuItem>
                     ))}
                 </Select>
-                <FormHelperText>Choose a Membership</FormHelperText>
+                <FormHelperText>Odaberi članarinu!</FormHelperText>
             </FormControl>
 
             <div className="total">
                 <hr />
                 <h2>
-                    Total price:{" "}
+                    Ukupna cijena:{" "}
                     {checked ? membershipType.Price + coach.EmployeePrice : membershipType.Price}€
                 </h2>
             </div>
@@ -318,6 +382,7 @@ function MembershipRegister(props) {
                     variant="outlined"
                     size="large" //-2 because steps starts at 0, and on the last step should be submit
                     onClick={handleSubmit}
+                    type="submit" //needed for file upload to work
                     disabled={
                         checked
                             ? workout.length === 0 ||
@@ -326,7 +391,7 @@ function MembershipRegister(props) {
                             : workout.length === 0 || membershipType.length === 0
                     }
                 >
-                    Submit
+                    Napravi nalog
                 </Button>
             </div>
         </>

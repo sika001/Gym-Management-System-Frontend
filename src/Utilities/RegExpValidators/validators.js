@@ -1,4 +1,5 @@
 const validateForm = (data, formType) => {
+    //validnost email-a i password-a
     const emailRegExp = /^[A-Za-z0-9+\-_~]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
@@ -9,8 +10,8 @@ const validateForm = (data, formType) => {
 };
 
 const validateName = (name) => {
-    //validates names and surnames
-    const nameRegExp = /^[A-Za-z]+$/;
+    //validnost imena i prezimena (samo slova + ŠĐŽĆČšđžćč)
+    const nameRegExp = /^[A-Za-ŠšĐđŽžĆćČč]+$/;
 
     const isValidName = nameRegExp.test(name);
 
@@ -18,8 +19,8 @@ const validateName = (name) => {
 };
 
 const validatePhone = (phone) => {
-    //validates phone number
-    const phoneRegExp = /^[+]?[\d|\s]+$/; //can begin with +, can contain only numbers and spaces
+    //validnost broja telefona (može početi sa +, može sadržavati samo brojeve i razmake)
+    const phoneRegExp = /^[+]?[\d|\s]+$/;
 
     const isValidPhone = phoneRegExp.test(phone);
 
@@ -27,13 +28,15 @@ const validatePhone = (phone) => {
 };
 
 const validateAddress = (address) => {
-    const addressRegExp = /^[A-Za-z0-9\s.,'-]+$/i; //can contain only letters, numbers, spaces, dots, commas, dashes and apostrophes
+    //validnost adrese (slova, brojevi, razmaci, tačke, zarezi, crtice i apostrofi)
+    const addressRegExp = /^[A-Za-z0-9\s.,'-]+$/i; 
 
     const isValidAddress = addressRegExp.test(address);
     return isValidAddress;
 };
 
 const validateNumbers = (numbers) => {
+    //validnost brojeva (samo brojevi)
     const numbersRegExp = /^[0-9]+$/;
 
     const isValidNumbers = numbersRegExp.test(numbers);

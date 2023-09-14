@@ -1,9 +1,19 @@
 import TextField from "@mui/material/TextField";
-import { useState } from "react";
+import {  useContext, useEffect, useState } from "react";
 import { validateForm } from "../../Utilities/RegExpValidators/validators";
 import Button from "@mui/material/Button";
+import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
+import { useSnackbar } from "notistack";
+import AuthContext from "../Auth Context/AuthContext";
+import dotenv from 'dotenv';
+dotenv.config();
+
 
 function AccountInfoRegister(props) {
+
+    const {user} = useContext(AuthContext);
+    const [isAdmin] = useState(user.isEmployee); //ako je admin kreira se zaposleni, inače klijent nastavlja na sljedeći korak
+    
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -11,6 +21,16 @@ function AccountInfoRegister(props) {
     const [isValidPassword, setIsValidPassword] = useState(true);
     const [isValidConfirmPassword, setIsValidConfirmPassword] = useState(false);
     const [isBlured, setIsBlured] = useState(false); //state that tracks when a form is out of focus
+
+    const { enqueueSnackbar } = useSnackbar(); //this is used for displaying a snackbar message
+    const showSnackbarMessage = (variant, message) => () => {
+        // variant could be success, error, warning, info, or default
+        enqueueSnackbar(message, {
+            variant,
+            autoHideDuration: 2000,
+            anchorOrigin: { vertical: "top", horizontal: "center" }, //snackbar position
+        });
+    };
 
     const handleBlur = () => {
         setIsBlured(true);
@@ -39,20 +59,60 @@ function AccountInfoRegister(props) {
         else setIsValidConfirmPassword(false);
     };
 
+    const api_url = process.env.REACT_APP_API_URL;
+
     const handleClick = () => {
-        props.handleStepValue(); //increments props.step value
-        handleRole(); //sends role object to parent component
+        //kreira zaposlenog ako je admin, inače nastavlja na sledeći korak ako je klijent
+        if(isAdmin){
+            console.log("ADMIN");
+            //ako je admin kreiraj novog zaposlenog
+            const registerEmployeeFD = new FormData();
+            props.employee.forEach((key, value) => {
+                registerEmployeeFD.append(value, key);
+            }) //dodajemo sve podatke iz PersonalInfoRegister.js u FormData
+            
+            //stari podaci, dodajemo jos email i password
+            registerEmployeeFD.append("Email", email);
+            registerEmployeeFD.append("Password", password);
+
+            //pozivamo api za kreiranje novog zaposlenog (takođe se radi preko register metode, slanjem formData objekta)
+            jwtInterceptor.post(`${api_url}/register`, registerEmployeeFD, 
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data", // Important: Set the content type to 'multipart/form-data'
+                    },
+                    withCredentials: true
+                })
+                .then((response) => {
+                    showSnackbarMessage("success", "Uspješno kreiran novi zaposleni!")();
+                    console.log(response.data);
+                }).catch((error) => {
+                    showSnackbarMessage("error", "Greška prilikom kreiranja novog zaposlenog!")();
+                    console.log(error);
+                }
+            );
+
+            
+        }else{
+            console.log("KLIJENT");
+            //ako je klijent, šalji podatke u parent komponentu i idi na sledeći korak
+            handleRole();
+            props.handleStepValue();
+        }
     };
 
     const handleRole = () => {
-        const role = {
-            // FK_ClientID: null, //will be added on step 3
-            Email: email,
-            Password: password,
-            isClient: 1, //CHANGE THIS WHEN SETTING UP ADMIN ACCOUNT
-        };
+        const role = new FormData();
+
+        role.append("Email", email);
+        role.append("Password", password);
+
+        //ako admin registruje zaposlenog, onda je isEmployee = 1, inače, ako se klijent sam registruje, onda je isClient = 1
+        props.isAdmin ? role.append("isEmployee", 1) : role.append("isClient", 1); 
+
         props.handleRole(role);
     };
+
     return (
         <>
             {/* Renders only on props.step 2 */}
@@ -95,6 +155,7 @@ function AccountInfoRegister(props) {
 
             <div className="submit">
                 <Button
+                    sx={{width: 200}}
                     className="submit-btn"
                     variant="outlined"
                     size="large" //-2 because props.steps starts at 0, and on the last props.step should be submit
@@ -108,7 +169,7 @@ function AccountInfoRegister(props) {
                         !isValidConfirmPassword
                     }
                 >
-                    Next
+                 {isAdmin ? "Dalje" : "Kreiraj zaposlenog!"}
                 </Button>
             </div>
         </>

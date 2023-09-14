@@ -1,7 +1,6 @@
 import * as React from "react";
 import { green } from "@mui/material/colors";
 import Checkbox from "@mui/material/Checkbox";
-import { useState } from "react";
 
 function ColorCheckbox(props) {
     return (

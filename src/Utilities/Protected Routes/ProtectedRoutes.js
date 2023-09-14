@@ -11,6 +11,7 @@ const ProtectedRoute = ({ children, accessBy }) => {
         }
     } else if (accessBy === "authenticated") {
         if (user) {
+            console.log("Proslo kroz authenticated");
             return children;
         }
     }

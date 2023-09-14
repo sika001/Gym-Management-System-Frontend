@@ -1,11 +1,11 @@
 import TextField from "@mui/material/TextField";
-import BasicDatePicker from "../../Utilities/DatePickers/datepickers";
+import { BasicDatePicker } from "../../Utilities/DatePickers/datepickers";
 import {
     validateName,
     validatePhone,
     validateAddress,
 } from "../../Utilities/RegExpValidators/validators";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import Button from "@mui/material/Button";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
@@ -13,10 +13,17 @@ import MenuItem from "@mui/material/MenuItem";
 import FormHelperText from "@mui/material/FormHelperText";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
-import environment from "../../environment";
 import moment from "moment";
+import { Input, InputAdornment, InputLabel } from "@mui/material";
+import AuthContext from "../Auth Context/AuthContext";
+import dotenv from 'dotenv';
+dotenv.config();
 
 function PersonalInfoRegister(props) {
+    const { user } = useContext(AuthContext); //ulogovani korisnik
+    
+    const api_url = process.env.REACT_APP_API_URL;
+
     const [name, setName] = useState("");
     const [surname, setSurname] = useState("");
     const [phone, setPhone] = useState("");
@@ -28,6 +35,11 @@ function PersonalInfoRegister(props) {
     const [city, setCity] = useState("");
     const [gymsData, setGymsData] = useState([]);
     const [gym, setGym] = useState("");
+    const [file, setFile] = useState("");
+    const [fileName, setFileName] = useState("");
+    const [salary, setSalary] = useState(450); 
+    const [employeeType, setEmployeeType] = useState([]);
+    const [selectedEmployeeType, setSelectedEmployeeType] = useState(null)
 
     const [isValidName, setisValidName] = useState(true);
     const [isValidSurname, setIsValidSurname] = useState(true);
@@ -37,31 +49,64 @@ function PersonalInfoRegister(props) {
     const [isBluredCity, setIsBluredCity] = useState(false);
     const [isBluredCountry, setIsBluredCountry] = useState(false); //need multiple states because of multiple selects
     const [isBluredGym, setIsBluredGym] = useState(false);
-
+    const [isBluredEmployeeType, setIsBluredEmployeeType] = useState(false);
+    
     const [isClicked, setIsClicked] = useState(false);
 
     useEffect(() => {
-        ///PROVJERITI ZASTO OVDJE NE ULAZI
         if (!isClicked) return;
 
-        handleClient();
+        handleUser();
+
         setIsClicked(false); //resets isClicked state
 
         props.handleStepValue(); //increments step value
     }, [isClicked]);
 
-    const handleClient = () => {
-        const client = {
-            Name: name,
-            Surname: surname,
-            DateOfBirth: date,
-            Phone: phone,
-            Address: address,
-            FK_WorkoutID: null, //will be added on step 3
-        };
-        props.handleClient(client); //pushes client info to parent component
-    };
+    useEffect(() => {
+        if(!user.isAdmin) return;
+        // dovlači tip zaposlenog (trener, recepcionar...)
+        //ne treba jwtInterceptor jer je ruta otvorena za sve
+        axios.get(`${api_url}/employee/type`)
+            .then((res) => {
+                setEmployeeType(res.data);
+                console.log("EMPLOYEE TYPE: ", res.data);
+            })
+            .catch((err) => {
+                console.log(err)
+            });
+    }, []);
 
+    useEffect(() => {
+        if(!employeeType){
+            console.log("LOADING");
+            return <p>Loading...</p>
+        }
+    },[]);
+
+    const handleUser = () => {
+         //Not using objects, but formData, because of the file upload
+        const userFD = new FormData();
+        userFD.append("Name", name);
+        userFD.append("Surname", surname);
+        userFD.append("DateOfBirth", date);
+        userFD.append("Phone", phone);
+        userFD.append("Address", address);
+        userFD.append("FK_WorkoutID", null);
+        userFD.append("Picture", file);
+        userFD.append("PictureName", fileName); //sends the file name to the backend as well (needed for multer)
+        userFD.append("FK_GymID", gym.ID)
+        userFD.append("FK_EmployeeTypeID", selectedEmployeeType.ID) // 1 - coach, 2 - receptionist
+
+        //pushes user (client or employee) information  to parent component
+        if(user.isAdmin){
+            userFD.append("Salary", salary)
+            props.handleEmployee(userFD)            
+        }else{
+            props.handleClient(userFD)
+        }
+    };
+    
     const handleClick = () => {
         setIsClicked(true);
     };
@@ -133,7 +178,36 @@ function PersonalInfoRegister(props) {
         setIsBluredGym(true);
     };
 
-    const api_url = environment.api_url;
+    const handleSalaryChange = (event) => {
+        const salary = event.target.value;
+        console.log("SALARY: ", salary);
+        setSalary(salary);
+    };
+
+    const handleEmployeeTypeChange = (event) => {
+        const employeeType = event.target.value;
+
+        console.log("EMPLOYEE TYPE: ", employeeType);
+        setSelectedEmployeeType(employeeType);
+    };
+
+    const handleFileButtonClick = () => {
+        document.getElementById("fileInput").click();
+    };
+
+    const handleFileChange = (event) => {
+        if (!event.target.files[0]) return; //if no file is selected, return
+
+        const file = event.target.files[0];
+
+        const newFile = new File([file], Date.now() + file.name, { type: file.type }); //recreates the file with a new name
+        //adds timestamp to the file name to avoid duplicates
+
+        console.log("FILE: ", newFile);
+        setFile(newFile);
+        setFileName(newFile.name);
+    };
+
 
     useEffect(() => {
         const getAllCountries = axios
@@ -157,9 +231,11 @@ function PersonalInfoRegister(props) {
 
     useEffect(() => {
         if (city === "") return;
-
-        const getLocalGyms = axios
-            .get(`${api_url}/gym/${city.ID}`)
+        //NAPRAVITI DA
+        //ako je korisnik admin, dovuci sve njegove teretane, inače, dovuci sve teretane u gradu
+    
+        axios
+            .get(`${api_url}/gym/${city.ID}`) 
             .then((res) => setGymsData(res.data))
             .catch((err) => console.log(err));
     }, [city]);
@@ -195,6 +271,8 @@ function PersonalInfoRegister(props) {
                     handleDateChange={handleDateChange}
                     className={"formclass"}
                     label={"Date of birth"}
+                    disableFuture={true}
+                    disablePast={false}
                 />
             </div>
             <div className="phone">
@@ -219,7 +297,6 @@ function PersonalInfoRegister(props) {
                     error={!isValidAddress && isBlured}
                 />
             </div>
-
             <FormControl sx={{ m: 1, minWidth: 120 }}>
                 <Select
                     value={country ? country : ""}
@@ -237,7 +314,6 @@ function PersonalInfoRegister(props) {
                 </Select>
                 <FormHelperText>Choose a Country</FormHelperText>
             </FormControl>
-
             {country && (
                 <FormControl sx={{ m: 1, minWidth: 120 }}>
                     <Select
@@ -257,7 +333,6 @@ function PersonalInfoRegister(props) {
                     <FormHelperText>Choose a City</FormHelperText>
                 </FormControl>
             )}
-
             {city && (
                 <FormControl sx={{ m: 1, minWidth: 120 }}>
                     <Select
@@ -277,12 +352,64 @@ function PersonalInfoRegister(props) {
                     <FormHelperText>Choose a Gym</FormHelperText>
                 </FormControl>
             )}
+            {/* DON'T TOUCH name: Picture (need to be the same as the one on the backend in muler-config.js)*/}
+            <div className="file-upload" style={{ display: "flex", justifyContent: "center" }}>
+                <input
+                    type="file"
+                    id="fileInput"
+                    name="Picture"
+                    onChange={handleFileChange}
+                    style={{ display: "none" }}
+                />
+
+                {/* Button to trigger file input */}
+                <Button variant="contained" onClick={handleFileButtonClick}>
+                    Upload a Photo
+                </Button>
+                <p>{file ? file.name : "No photo selected!"}</p>
+            </div>
+
+            <FormControl sx={{ m: 1, minWidth: 120}} variant="standard">
+                <InputLabel htmlFor="salary-amount">Iznos zarade</InputLabel>
+                <Input
+                    id="salary-amount"
+                    endAdornment={<InputAdornment position="end">€</InputAdornment>} //€ na pocetku polja
+                    value={salary}
+                    onChange={handleSalaryChange}
+                />
+            </FormControl>
+
+            <FormControl sx={{ m: 1, minWidth: 120}} variant="standard">
+                <InputLabel htmlFor="employee-type">Employee Type</InputLabel>
+                <Select
+                    value= {""} 
+                    onChange={handleEmployeeTypeChange}
+                    onClick={() => setIsBluredEmployeeType(true)}
+                    error={employeeType && employeeType.length === 0 && isBluredEmployeeType}
+                >
+
+                    {employeeType && employeeType.map((employeeTypeEl) => {
+                        return (
+                         // Set the value to the selected employeeType
+                            <MenuItem value={employeeTypeEl} key={uuidv4()}>
+                                {employeeTypeEl.Type}
+                            </MenuItem>
+                        )
+                
+                    })
+                    }
+
+                    
+                </Select>
+            </FormControl>
+
+
             <div className="submit">
                 <Button
                     className="submit-btn"
                     variant="outlined"
                     size="large"
-                    onClick={handleClick} //increments step value and pushes client info to parent component
+                    onClick={handleClick} //increments step value and pushes user info to parent component
                     disabled={
                         !isValidName ||
                         !isValidSurname ||
@@ -298,9 +425,11 @@ function PersonalInfoRegister(props) {
                         gym.length === 0
                     }
                 >
-                    Next
+                    Dalje
                 </Button>
             </div>
+
+            
         </>
     );
 }

@@ -1,13 +1,18 @@
 import Stepper from "../../Utilities/Stepper/Stepper";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import React from "react";
 import PersonalInfoRegister from "./Personal-InfoRegister";
 import AccountInfoRegister from "./AccountInfoRegister";
 import MembershipRegister from "./MembershipRegister";
 import "./Register.css";
+import AuthContext from "../Auth Context/AuthContext";
 
-function Register() {
+function Register(props) {
+    //same register component for both client and employee
+
+    const { user } = useContext(AuthContext); //ulogovani korisnik
+
     const [step, setStep] = useState(0);
 
     const handleStepValue = () => {
@@ -15,13 +20,22 @@ function Register() {
         else step = steps.length - 1; //because steps start at 0
     };
 
-    const steps = [
-        "Enter personal information",
-        "Enter account information",
-        "Choose a membership",
+  
+    const stepsClient = [
+        "Lični podaci",
+        "Informacije o nalogu",
+        "Informacije o članarini",
     ];
 
+    const stepsEmployee = [
+        "Lični podaci o zaposlenom",
+        "Informacije o nalogu",
+    ];
+
+    const steps = user.isClient ? stepsClient : stepsEmployee; //koraci na stepperu
+
     const [client, setClient] = useState({});
+    const [employee, setEmployee] = useState({});
     const [role, setRole] = useState({});
     const [workout, setWorkout] = useState({});
     const [membership, setMembership] = useState({});
@@ -30,6 +44,11 @@ function Register() {
 
     const handleClient = (newClient) => {
         setClient(newClient);
+    };
+
+    const handleEmployee = (newEmployee) => {
+        setEmployee(newEmployee);
+        console.log("employee", employee);
     };
 
     const handleRole = (role) => {
@@ -56,51 +75,57 @@ function Register() {
         <>
             <h1>Register component</h1>
             <Stepper activeStep={step} steps={steps} />
-            <form className="login-container">
-                <div className="greeting">
-                    <h1>
-                        Enter {step === 0 ? "personal" : step === 1 ? "account" : "membership"}{" "}
-                        information!
-                    </h1>
+            {/* <form className="login-container"> */}
+            <div className="greeting">
+                <h1>
+                    Enter {step === 0 ? "personal" : step === 1 ? "account" : "membership"}{" "}
+                    information!
+                </h1>
+            </div>
+
+            {step === 0 && (
+                <PersonalInfoRegister
+                    handleStepValue={handleStepValue}
+                    handleClient={handleClient}
+                    handleEmployee={handleEmployee}
+                    handleGym={handleGym}
+                />
+            )}
+
+            {step === 1 && (
+                <AccountInfoRegister 
+                    handleStepValue={handleStepValue} 
+                    handleRole={handleRole} 
+                    employee={employee}
+                 />
+            )}
+            
+            {step === 2 && user.isClient &&
+                <MembershipRegister
+                    step={step}
+                    handleStepValue={handleStepValue}
+                    role={role}
+                    client={client}
+                    workout={workout}
+                    membership={membership}
+                    personalCoach={personalCoach}
+                    handleRole={handleRole}
+                    handleClient={handleClient}
+                    handleWorkout={handleWorkout}
+                    handleMembership={handleMembership}
+                    handlePersonalCoach={handlePersonalCoach}
+                    gym={gym}
+                    isAdmin={user.isAdmin}
+                />
+            }
+                
+            {/* Ako nije ulogovan */}
+            {!user && 
+             <Link to={"/register"}>
+                <div className="register-text">
+                    <h4>Don't have an account? Register here</h4>
                 </div>
-
-                {step === 0 && (
-                    <PersonalInfoRegister
-                        handleStepValue={handleStepValue}
-                        handleClient={handleClient}
-                        handleGym={handleGym}
-                    />
-                )}
-                {step === 1 && (
-                    <AccountInfoRegister
-                        handleStepValue={handleStepValue}
-                        handleRole={handleRole}
-                    />
-                )}
-                {step === 2 && (
-                    <MembershipRegister
-                        step={step}
-                        handleStepValue={handleStepValue}
-                        role={role}
-                        client={client}
-                        workout={workout}
-                        membership={membership}
-                        personalCoach={personalCoach}
-                        handleRole={handleRole}
-                        handleClient={handleClient}
-                        handleWorkout={handleWorkout}
-                        handleMembership={handleMembership}
-                        handlePersonalCoach={handlePersonalCoach}
-                        gym={gym}
-                    />
-                )}
-
-                <Link to={"/register"}>
-                    <div className="register-text">
-                        <h4>Don't have an account? Register here</h4>
-                    </div>
-                </Link>
-            </form>
+            </Link>}
         </>
     );
 }

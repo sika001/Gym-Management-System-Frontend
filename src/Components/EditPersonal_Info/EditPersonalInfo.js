@@ -17,15 +17,26 @@ import { useSnackbar } from "notistack";
 import { Avatar, Grid, IconButton } from "@mui/material";
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import { useNavigate } from "react-router-dom";
-import dotenv from 'dotenv';
-dotenv.config();
 
-function Account() {
-    const { user } = useContext(AuthContext);
 
+function EditPersonalInfo(props) {
+    const { user } = useContext(AuthContext); //ulogovani korisnik (iz local storage-a)
+    const [isEditingEmployee] = useState(props.isEditingEmployee); 
+
+    const [editUser] = useState(()=>{ 
+        //ako se edituje zaposleni, editUser je zaposleni, inače je editUser trenutno ulogovani korisnik (može biti i zaposleni)
+        //ovo je potrebno jer istu ovu komponentu koristim i za Account, gdje korisnik sam sebi mijenja podatke
+        if(isEditingEmployee){
+            console.log("EMPLOYEE: ", props.employee);
+            return props.employee;
+        }else{
+            console.log("USER: ", user);
+            return user;
+        }
+    }) 
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState(user.Email);
+    const [email, setEmail] = useState(editUser.Email);
     const [password, setPassword] = useState(null);
     const [confirmPassword, setConfirmPassword] = useState(null);
     const [isValidEmail, setisValidEmail] = useState(true);
@@ -35,14 +46,14 @@ function Account() {
 
     const [isEmailEdited, setIsEmailEdited] = useState(false); //used to check if email is edited 
 
-    const [name, setName] = useState(user.Name);
-    const [surname, setSurname] = useState(user.Surname);
-    const [phone, setPhone] = useState(user.Phone);
-    const [date, setDate] = useState(moment(user.DateOfBirth).format("YYYY-MM-DD"));
-    const [address, setAddress] = useState(user.Address);
+    const [name, setName] = useState(editUser.Name);
+    const [surname, setSurname] = useState(editUser.Surname);
+    const [phone, setPhone] = useState(editUser.Phone);
+    const [date, setDate] = useState(moment(editUser.DateOfBirth).format("YYYY-MM-DD"));
+    const [address, setAddress] = useState(editUser.Address);
 
     const [file, setFile] = useState("");
-    const [fileName, setFileName] = useState(user.Picture);
+    const [fileName, setFileName] = useState(editUser.Picture);
 
     const [isValidName, setisValidName] = useState(true);
     const [isValidSurname, setIsValidSurname] = useState(true);
@@ -84,9 +95,9 @@ function Account() {
         console.log("CONVERT TO JSON: ", updatedUser);
         console.log("OLD STRG", (localStorage.getItem("userProfile")));
         
-        const userLink = user.FK_EmployeeID ? "employee" : "client"; //if user is an employee, send the request to the employee endpoint, else send it to the client endpoint
+        const userLink = editUser.FK_EmployeeID ? "employee" : "client"; //if user is an employee, send the request to the employee endpoint, else send it to the client endpoint
         //editing user's information
-        jwtInterceptor.put(`${api_url}/${userLink}/${user.ID}`, 
+        jwtInterceptor.put(`${api_url}/${userLink}/${editUser.ID}`, 
         editedUser
         , {
             headers: {
@@ -100,28 +111,28 @@ function Account() {
             editedUser.append("Email", isEmailEdited ? email : null) //if email is edited, send the new email, else it will be null (this case is handled on backend)
             //by default, password is null
             editedUser.append("Password", password)
-            editedUser.append("FK_EmployeeID", user.FK_EmployeeID);
-            editedUser.append("FK_ClientID", user.FK_ClientID);
+            editedUser.append("FK_EmployeeID", editUser.FK_EmployeeID);
+            editedUser.append("FK_ClientID", editUser.FK_ClientID);
             
             if(!isEmailEdited && !password) {
                 showSnackbarMessage("success", "Uspješno ste ažurirali lične podatke!")();
-                navigate(user.FK_EmployeeID ? "/employees" : "/members");
+                navigate(editUser.FK_EmployeeID ? "/employees" : "/members");
             }; //ako nije mijenjao email i password, ne treba da se updateuje login data, pa se odmah preusmjerava na dashboard
 
             const updatedUserData = {
-                ID: user.ID,
+                ID: editUser.ID,
                 Name: name,
                 Surname: surname,
                 DateOfBirth: date,
                 Phone: phone,
                 Address: address,
                 Picture: fileName,
-                Email: isEmailEdited ? email : user.Email, //if email is edited, send the new email, else it will be the old one
-                FK_EmployeeID: user.FK_EmployeeID,
-                FK_ClientID: user.FK_ClientID,
-                isClient: user.isClient,
-                isEmployee: user.isEmployee,
-                isAdmin: user.isAdmin,
+                Email: isEmailEdited ? email : editUser.Email, //if email is edited, send the new email, else it will be the old one
+                FK_EmployeeID: editUser.FK_EmployeeID,
+                FK_ClientID: editUser.FK_ClientID,
+                isClient: editUser.isClient,
+                isEmployee: editUser.isEmployee,
+                isAdmin: editUser.isAdmin,
                 
             };
 
@@ -133,13 +144,13 @@ function Account() {
                     jwtInterceptor.put(`${api_url}/login`, {
                         Email: email,
                         Password: password,
-                        FK_ClientID: user.FK_ClientID,
-                        FK_EmployeeID: user.FK_EmployeeID,
+                        FK_ClientID: editUser.FK_ClientID,
+                        FK_EmployeeID: editUser.FK_EmployeeID,
                     },
                     {withCredentials: true})
                     .then((res)=>{
                         showSnackbarMessage("success", "Uspješno ažuriranje podataka!")();
-                        navigate(user.FK_EmployeeID ? "/employees" : "/members");
+                        navigate(editUser.FK_EmployeeID ? "/employees" : "/members");
                     })
                     .catch((err)=>{
                         console.log("Error while trying to update login information!",err);
@@ -261,8 +272,8 @@ function Account() {
                     <div style={{ position: 'relative', width: 160, height: 160, ml: 'auto', mr: 'auto' }}>
                         <Avatar
                         ///NAPRAVITI OVO DA SE SLIKA PRIKAZUJE
-                        src={`${api_url}/uploads/${user.Picture}`}
-                        alt={user.Name + " " + user.Surname}
+                        src={`${api_url}/uploads/${editUser.Picture}`}
+                        alt={editUser.Name + " " + editUser.Surname}
                         sx={{
                             width: '100%',
                             height: '100%',
@@ -431,4 +442,4 @@ function Account() {
     );
 }
 
-export default Account;
+export default EditPersonalInfo;

@@ -1,6 +1,6 @@
 import Home from "./Components/Home/Home";
 import Login from "./Components/Login/Login";
-import Account from "./Components/Account/Account";
+import EditPersonalInfo from "./Components/EditPersonal_Info/EditPersonalInfo";
 import Members from "./Components/Members/Members";
 import Register from "./Components/Register/Register";
 import Error from "./Components/Error/Error";
@@ -11,6 +11,7 @@ import ProtectedRoute from "./Utilities/Protected Routes/ProtectedRoutes";
 import Dashboard from "./Components/Dashboard/Dashboard";
 import Schedule from "./Components/Schedule/Schedule";
 import Employee from "./Components/Employee/Employee";
+import Logout from "./Components/Login/Logout";
 
 const router = createBrowserRouter([
     {
@@ -44,7 +45,7 @@ const router = createBrowserRouter([
                 path: "/logout",
                 element: (
                     <ProtectedRoute accessBy="authenticated">
-                        <Login />{" "}
+                        
                     </ProtectedRoute>
                 ),
             },
@@ -60,7 +61,7 @@ const router = createBrowserRouter([
                 path: "/account",
                 element: (
                     <ProtectedRoute accessBy="authenticated">
-                        <Account />{" "}
+                        <EditPersonalInfo />{" "}
                     </ProtectedRoute>
                 ),
                 // loader: accountLoader,
@@ -109,6 +110,7 @@ const router = createBrowserRouter([
         ],
     },
 ]);
+
 function App() {
     return (
         <div>

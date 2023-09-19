@@ -5,33 +5,22 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { RRule } from "rrule";
 import DialogComponent from "../../Utilities/Dialog/Dialog";
-import scheduleIcon from "../../images/schedule.png";
 import moment from "moment";
 import { useEffect } from "react";
-import TextField from "@mui/material/TextField";
-import DateTimePickerComponent from "../../Utilities/DatePickers/datepickers";
-import ColorCheckbox from "../../Utilities/Checkbox/Checkbox";
-import MenuItem from "@mui/material/MenuItem";
-import { Select } from "@mui/material";
-import { v4 as uuidv4 } from "uuid";
 import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
-import dayjs from "dayjs";
-import dotenv from 'dotenv';
-dotenv.config();
+import Loader from "../../Utilities/Loader/Loader";
+import ReadOnlyEventComponent from "./EventComponents/ReadOnlyEventComponent";
+import { Box } from "@mui/material";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import ButtonIcon from "../../Utilities/Button/Button";
+import AddEditEventComponent from "./EventComponents/AddEditEventComponent";
 
 function ScheduleComponent(props) {
     const [data] = useState(props.employeeWorkouts); //contains info about personal coaches, their workouts and time schedules
 
-    const findNearestDayOfWeek = (dayOfWeek, date) => {
-        //returns the nearest date that has a certain day of the week (1 - Monday, 2 - Tuesday, 3 - Wednesday, 4 - Thursday, 5 - Friday, 6 - Saturday, 7 - Sunday)
-        const currDate = new Date(date);
-        while (currDate.getDay() !== dayOfWeek) {
-            currDate.setDate(currDate.getDate() + 1);
-        }
+    console.log("DATA", data);
 
-        return currDate;
-    };
-
+    const [isLoading, setIsLoading] = useState(true);
     const [recurringEvents, setRecurringEvents] = useState([]); //contains info about recurring events
     const [nonRecurringEvents, setNonRecurringEvents] = useState([]); //contains info about non-recurring events
 
@@ -56,6 +45,7 @@ function ScheduleComponent(props) {
     };
 
     useEffect(() => {
+        setIsLoading(true);
         //loading events from the database
         console.log("DATA DOVUCEN", data);
 
@@ -70,8 +60,9 @@ function ScheduleComponent(props) {
                 const newEndDate = changeDatesTime(element["StartDate"], element["EndTime"]);
                 // Now newStartDate holds the date with the adjusted time
 
-                console.log("newStartDate", newStartDate, "newEndDate", newEndDate);
-                console.log("NewStartDay", newStartDate.getDay());
+                console.log("ELEMENT", element, "getDay", newStartDate.getDay(), "newEndDate", newEndDate);
+                // console.log("newStartDate", newStartDate, "newEndDate", newEndDate);
+                // console.log("NewStartDay", newStartDate.getDay());
                 //updating the state of loaded non-recurring events
                 setNonRecurringEvents((prev) => [
                     ...prev,
@@ -87,6 +78,11 @@ function ScheduleComponent(props) {
                                     ? element["Name"] + " " + element["Surname"]
                                     : null, //this is used to display the coach name in the dialog
                             ScheduleID: element["ScheduleID"],
+                            //OVO PROVJERITI
+                            "Workout Name": element["Workout Name"],
+                            "Workout Type": element["Workout Type"],
+                            "FK_WorkoutID": element["FK_WorkoutID"],
+                            "isRecurring": element["isRecurring"],
                         },
                     },
                 ]);
@@ -101,7 +97,17 @@ function ScheduleComponent(props) {
             const newStartDate = changeDatesTime(element["StartDate"], element["StartTime"]);
             const newEndDate = changeDatesTime(element["StartDate"], element["EndTime"]);
 
-            console.log("newStartDate", newStartDate, "newEndDate", newEndDate);
+            console.log(
+                "RECCURRING Element:",
+                element,
+                "newStartDate",
+                newStartDate,
+                "newEndDate",
+                newEndDate
+            );
+
+            const RRuleDayMapping = { 0: 'SU', 1: 'MO', 2:'TU', 3:'WE', 4: 'TH', 5: 'FR', 6: 'SA'}; //Ovo je potrebno za RRule
+
             //updating the state of loaded recurring events
             setRecurringEvents((prev) => [
                 ...prev,
@@ -115,18 +121,23 @@ function ScheduleComponent(props) {
                         coach:
                             element["Name"] && element["Surname"]
                                 ? element["Name"] + " " + element["Surname"]
-                                : null, //this is used to display the coach name in the dialog
+                                : null, //koristi se za prikaz imena trenera u Dialog komponenti
                         ScheduleID: element["ScheduleID"],
+                        //OVO PROVJERITI
+                        "Workout Name": element["Workout Name"],
+                        "Workout Type": element["Workout Type"],
+                        "FK_WorkoutID": element["FK_WorkoutID"],
+                        "isRecurring": element["isRecurring"],
                     },
                     rrule: new RRule({
-                        //Setting up the recurring rule
-                        //by weekday is an array of days of the week (0 - Sunday, 1 - Monday,..., 6 - Saturday)
-                        //but in the database, element["DayOfWeek"] is in format 1 - Monday, 2 - Tuesday,..., 7 - Sunday
+                        //u bazi je (0 - Sun, 1 - Mon,..., 5 - Fri, 6 - Sat)
+                        //u RRule-u je (0 - Mon, 1 - Tue,..., 5 - Sat, 6 - Sun) PROVJERITI OVO
+                        // byweekday: , //Od ovog dana u nedjelji počinje ponavljanje događaja
                         freq: RRule.WEEKLY,
-                        byweekday: element["DayOfWeek"] - 1, // Adjust for the day numbering difference
-                        // byweekday: [element["DayOfWeek"] === 7 ? 0 : element["DayOfWeek"] - 1], // Adjust for the day numbering difference
+                        byweekday: RRuleDayMapping[element["DayOfWeek"]], //Od ovog dana u nedjelji počinje ponavljanje događaja
+                        //RRuleDayMapping je definisan gore; izvlačimo DayOfWeek iz baze i tražimo odgovarajući ekvivalent u RRulleDayMapping-u
                         dtstart: newStartDate,
-                        until: new Date(new Date().getFullYear(), 11, 31), //this is the last day of the current year (11 is Decembar)
+                        until: new Date(new Date().getFullYear(), 11, 31), //ponavlja se do ovog datuma (31.12.trenutne godine) (od 0 počinju pa je 11 - Decembar)
                     }),
                 },
             ]);
@@ -162,6 +173,10 @@ function ScheduleComponent(props) {
     const [popoverEndDate, setPopoverEndDate] = useState(" "); // State to manage popover end date
     const [popoverCoach, setPopoverCoach] = useState(" "); // State to manage popover coach name and surname
     const [popoverScheduleID, setPopoverScheduleID] = useState(-1); // State to manage popover schedule id
+    const [popoverWorkoutName, setPopoverWorkoutName] = useState(" "); // State to manage popover workout name
+    const [popoverWorkoutType, setPopoverWorkoutType] = useState(" "); // State to manage popover workout type
+    const [popoverFK_WorkoutID, setPopoverFK_WorkoutID] = useState(-1); // State to manage popover workout id
+    const [popoverIsRecurring, setPopoverIsRecurring] = useState(false); // State to manage popover isRecurring
 
     const handleEventMouseEnter = (arg) => {
         //handles the event mouse enter (when the user clicks on an event)
@@ -174,18 +189,22 @@ function ScheduleComponent(props) {
         setPopoverEndDate(arg.event.endStr); //endStr is the end date of the event
         // setPopoverStartDate(arg.event.start);
         // setPopoverEndDate(arg.event.end); //VRATITI OVO GORE AKO NE BUDE RADILo
-
+        console.log("POPOVER props", arg.event.extendedProps);
         setPopoverText(arg.event.title); // Set popover text on event mouse enter
         setPopoverCoach(arg.event.extendedProps.coach); //sets coach name and surname into a state
         setPopoverScheduleID(arg.event.extendedProps.ScheduleID); //sets schedule id into a state
+
+        setPopoverWorkoutName(arg.event.extendedProps["Workout Name"]);
+        setPopoverWorkoutType(arg.event.extendedProps["Workout Type"]);
+        setPopoverFK_WorkoutID(arg.event.extendedProps["FK_WorkoutID"]);
+        setPopoverIsRecurring(arg.event.extendedProps["isRecurring"]);
 
         handleDialogOpen(); //opens Dialog
     };
 
     const [isDialogOpened, setIsDialogOpen] = useState(false);
     const [isAgree, setIsAgree] = useState(false);
-    const [isSnackbarOpened, setIsSnackbarOpened] = useState(false);
-    const [errorSnackbarOpened, setErrorSnackbarOpened] = useState(false);
+
     const [isBlured, setIsBlured] = useState(false); //state that tracks when a form is out of focus
     const [startEventDate, setStartEventDate] = useState(""); //state that tracks the start date of the event
     const [endEventDate, setEndEventDate] = useState(""); //state that tracks the end date of the event
@@ -210,6 +229,8 @@ function ScheduleComponent(props) {
         setPopoverEndDate(" "); //endStr is the end date of the event
         setPopoverText(" "); // Set popover text on event mouse enter
         setPopoverCoach(" "); //sets coach name and surname into a stat
+
+        // setIsLoading(false);
     };
 
     const handleEditedEventNameChange = (event) => {
@@ -234,36 +255,45 @@ function ScheduleComponent(props) {
     useEffect(() => {
         if (!isAgree || !isDialogOpened || !isCreatingNewEvent || newPopoverText.length === 0)
             return;
+        setIsLoading(true);
 
         const newEvent = {
             title: newPopoverText,
             start: new Date(startEventDate),
+            // start: startEventDate,
             extendedProps: {
                 coach:
                     chosenElement && chosenElement["Name"] && chosenElement["Surname"]
                         ? chosenElement["Name"] + " " + chosenElement["Surname"]
                         : null,
-                ScheduleID: null,
-
-                //coach is optional (if the user doesn't choose a workout, the coach name won't be displayed)
+                ScheduleID: 14,
+                //OVO PROVJERITI
+                "Workout Name": chosenElement && chosenElement["Workout Name"] ? chosenElement["Workout Name"] : 'Custom Event',
+                "Workout Type": chosenElement && chosenElement["Workout Type"] ? chosenElement["Workout Type"] : 'Custom Event',
+                "FK_WorkoutID": chosenElement && chosenElement["FK_WorkoutID"] ? chosenElement["FK_WorkoutID"] : 14,
+                "isRecurring": chosenElement && chosenElement["isRecurring"] ? chosenElement["isRecurring"] : false,
+                //Coach polje je opciono (ako korisnik ne izabere trening, ime i prezime trenera nece biti prikazano)
             },
-            end: new Date(new Date(endEventDate).getTime()),
+            end: new Date(endEventDate),
             allDay: false,
         };
-        // console.log("newEvent", newEvent);
+        console.log("NEW EVENT: ", newEvent);
 
         if (newPopoverText.length <= 1 || !startEventDate || !endEventDate || !newEvent) {
-            setErrorSnackbarOpened(true);
+            props.showSnackbarMessage("error", "Greška prilikom dodavanja novog događaja!")();
             console.log("ERROR WHILE TRYING TO ADD A NEW EVENT");
             handleDialogClose();
+
+            // setIsLoading(false);
             return;
         }
 
-        //if the event is recurring, it is added to the recurring events array
+        //ako je event recurring, dodaje se u recurring events array
         if (isRecurring) {
-            //This state is used to render the recurring events on the calendar
+            console.log("NOVI EVENT JESTE RECURRING, DODAJEM GA U RECURRING EVENTS ARRAY");
+            //pomoću ovog state-a se renderuju recurring events na kalendaru
             setRecurringEvents((prev) => [
-                //saving previous events, and adding a new one
+                //čuva prethode eventove, i dodaje novi
                 ...prev,
                 {
                     ...newEvent,
@@ -274,24 +304,30 @@ function ScheduleComponent(props) {
                                 ? chosenElement["Name"] + " " + chosenElement["Surname"]
                                 : null,
                         ScheduleID: null,
+                        //OVO PROVJERITI
+                        "Workout Name": chosenElement && chosenElement["Workout Name"] ? chosenElement["Workout Name"] : 'Custom Event',
+                        "Workout Type": chosenElement && chosenElement["Workout Type"] ? chosenElement["Workout Type"] : 'Custom Event',
+                        "FK_WorkoutID": chosenElement && chosenElement["FK_WorkoutID"] ? chosenElement["FK_WorkoutID"] : 14,
+                        "isRecurring": chosenElement && chosenElement["isRecurring"] ? chosenElement["isRecurring"] : false,
+
                     },
                     rrule: new RRule({
                         freq: RRule.WEEKLY,
-                        byweekday: [newEvent.start.getDay()] - 1,
-                        dtstart: newEvent.start,
+                        byweekday: newEvent.start.getDay(),
+                        dtstart: new Date(newEvent.start),
                         until: new Date(new Date().getFullYear(), 11, 31), //this is the last day of the current year (11 is Decembar)
                     }),
                 },
             ]);
         } else {
-            //if the event is not recurring, it is added to the non-recurring events array
-            //This state is used to render the non-recurring events on the calendar
-
+            //ako se event ne ponavlja (non recurring), onda se dodaje u non recurring events array
+            //pomoću ovog state-a se renderuju non recurring events na kalendaru
+            console.log("NOVI EVENT NIJE RECCURRING, DODAJEM GA U NON RECURRING EVENTS ARRAY");
             setNonRecurringEvents((prev) => [...prev, newEvent]);
         }
 
-        //adding the event to the database
-        //both non-recurring and recurring events use StartDate (non-recurring for one time date, recurring for the first date of the recurring event)
+        //Dodavanje eventova u bazu
+        //I non recurring i recurring eventovi koriste StartDate (non recurring za samo jedan datum, recurring za datum početka recurring eventa)
 
         console.log("DATUM ZA SLANJE", newEvent.start);
         console.log("MOMENT", moment(newEvent.start).format("YYYY-MM-DD HH:mm:ss"));
@@ -301,14 +337,14 @@ function ScheduleComponent(props) {
                 `${api_url}/schedule`,
                 {
                     EventName: newPopoverText,
-                    DayOfWeek: newEvent.start.getDay(),
+                    DayOfWeek: newEvent.start.getDay() === 0 ? 6 : newEvent.start.getDay(),
                     StartTime: moment(newEvent.start).format("HH:mm:ss"),
                     EndTime: moment(newEvent.end).format("HH:mm:ss"),
                     StartDate:
                         // !isRecurring && newEvent.start AKO NE BUDE RADILO OVO STAVITI
 
-                        //both non-recurring and recurring events use StartDate (non-recurring for one time date, recurring for the first date of the recurring event)
-                        //ADDING 2 HOURS TO THE START DATE (BECAUSE OF THE TIME ZONE)
+                        //I non recurring i recurring eventovi koriste StartDate (non recurring za samo jedan datum, recurring za datum početka recurring eventa)
+                        //DODAJEMO 2 SATA NA START DATE (ZBOG TIME ZONE-A)
                         newEvent.start
                             ? moment(new Date(newEvent.start.getTime() + 7200000)).format(
                                   "YYYY-MM-DD HH:mm:ss"
@@ -326,17 +362,19 @@ function ScheduleComponent(props) {
             )
             .then((res) => {
                 console.log("RESPONSE", res);
-                setIsSnackbarOpened(true);
+                props.showSnackbarMessage("success", "Novi događaj je uspješno dodat!")();
             })
             .catch((err) => {
                 console.log(err);
-                setErrorSnackbarOpened(true);
+                props.showSnackbarMessage("error", "Greška prilikom dodavanja novog događaja!")();
+            })
+            .finally(() => {
+                // setIsLoading(false);
+                props.handleSetFetchData(true); //force a re-render of the calendar, by changing the state in the parent component and fetching the data again
+
+                //closing the dialog (after the user clicks on the agree button), and resetting the states
+                handleDialogClose();
             });
-
-        props.handleSetFetchData(true); //force a re-render of the calendar, by changing the state in the parent component and fetching the data again
-
-        //closing the dialog (after the user clicks on the agree button), and resetting the states
-        handleDialogClose();
     }, [isAgree, isDialogOpened, isCreatingNewEvent, newPopoverText]);
 
     const [isUpdated, setIsUpdated] = useState(false); //state that tracks if the event is updated
@@ -353,6 +391,8 @@ function ScheduleComponent(props) {
     useEffect(() => {
         if (!isUpdated || !isDialogOpened || !isEditingEvent) return;
 
+        setIsLoading(true);
+
         const updatedEvent = {
             title: popoverText,
             start: new Date(popoverStartDate),
@@ -362,15 +402,20 @@ function ScheduleComponent(props) {
                         ? chosenElement["Name"] + " " + chosenElement["Surname"]
                         : null,
                 ScheduleID: popoverScheduleID,
+                //OVO PROVJERITI
+                "Workout Name": chosenElement && chosenElement["Workout Name"] ? chosenElement["Workout Name"] : 'Custom Event',
+                "Workout Type": chosenElement && chosenElement["Workout Type"] ? chosenElement["Workout Type"] : 'Custom Event',
+                "FK_WorkoutID": chosenElement && chosenElement["FK_WorkoutID"] ? chosenElement["FK_WorkoutID"] : 14,
+                "isRecurring": chosenElement && chosenElement["isRecurring"] ? chosenElement["isRecurring"] : false,
                 //coach is optional (if the user doesn't choose a workout, the coach name won't be displayed)
             },
             end: new Date(popoverEndDate),
-            allDay: false,
+            // allDay: false,
         };
         // console.log("newEvent", newEvent);
         console.log("UPDATED EVENT", updatedEvent);
         if (popoverText.length <= 1 || !popoverStartDate || !popoverEndDate || !updatedEvent) {
-            setErrorSnackbarOpened(true);
+            props.showSnackbarMessage("error", "Greška prilikom ažuriranja događaja!")();
             console.log("ERROR WHILE TRYING TO ADD UPDATE AN EVENT");
             handleDialogClose();
             return;
@@ -391,10 +436,15 @@ function ScheduleComponent(props) {
                                 ? chosenElement["Name"] + " " + chosenElement["Surname"]
                                 : null,
                         ScheduleID: popoverScheduleID,
+                        //OVO PROVJERITI
+                        "Workout Name": chosenElement && chosenElement["Workout Name"] ? chosenElement["Workout Name"] : 'Custom Event',
+                        "Workout Type": chosenElement && chosenElement["Workout Type"] ? chosenElement["Workout Type"] : 'Custom Event',
+                        "FK_WorkoutID": chosenElement && chosenElement["FK_WorkoutID"] ? chosenElement["FK_WorkoutID"] : 14,
+                        "isRecurring": chosenElement && chosenElement["isRecurring"] ? chosenElement["isRecurring"] : false,
                     },
                     rrule: new RRule({
                         freq: RRule.WEEKLY,
-                        byweekday: [updatedEvent.start.getDay()] - 1,
+                        byweekday: updatedEvent.start.getDay(),
                         dtstart: updatedEvent.start,
                         until: new Date(new Date().getFullYear(), 11, 31), //this is the last day of the current year (11 is Decembar)
                     }),
@@ -444,17 +494,19 @@ function ScheduleComponent(props) {
             )
             .then((res) => {
                 console.log("RESPONSE", res);
-                setIsSnackbarOpened(true);
+                props.showSnackbarMessage("success", "Događaj je uspješno ažuriran!")();
             })
             .catch((err) => {
                 console.log(err);
-                setErrorSnackbarOpened(true);
+                props.showSnackbarMessage("error", "Greška prilikom ažuriranja događaja!")();
+            })
+            .finally(() => {
+                // setIsLoading(false);
+                props.handleSetFetchData(true); //force a re-render of the calendar, by changing the state in the parent component and fetching the data again
+
+                //closing the dialog (after the user clicks on the agree button), and resetting the states
+                handleDialogClose();
             });
-
-        props.handleSetFetchData(true); //force a re-render of the calendar, by changing the state in the parent component and fetching the data again
-
-        //closing the dialog (after the user clicks on the agree button), and resetting the states
-        handleDialogClose();
     }, [isUpdated, isDialogOpened, isEditingEvent, newPopoverText]);
 
     const handleStartEventDateTimeChange = (event) => {
@@ -474,6 +526,7 @@ function ScheduleComponent(props) {
         //handles the change of the end event date
         // const dateTimeRez = moment(event.$d).format("DD-MM-YYYY HH:mm");
         const nonFormattedDate = event.$d;
+        console.log("NON FORMATTED DATE", nonFormattedDate);
         setEndEventDate(nonFormattedDate);
     };
     const handleDialogOpen = () => {
@@ -482,7 +535,7 @@ function ScheduleComponent(props) {
     };
 
     const handleCheckbox = (event) => {
-        //handles the change of the checkbox
+        //Kod Edit komponente, prvi checkbox za dodjeljivanje treninga nekom događaju
         console.log("CHECKBOX CLICKED", event.target.checked);
         setIsChecked(event.target.checked);
     };
@@ -501,20 +554,24 @@ function ScheduleComponent(props) {
     const [isRecurring, setIsRecurring] = useState(false); //keep track of the checkbox state (recurring or not recurring)
 
     const handleRecurringCheckbox = (event) => {
-        //handles the change of the checkbox in the dialog
+        //Mijenja vrijednost checkboxa (da li je event recurring ili ne)
+        console.log("RECURRING CHECKBOX CLICKED", event.target.checked);
         setIsRecurring(event.target.checked);
     };
 
     const handleChosenElementChange = (event) => {
-        //handles the change of the workout in the dialog
+        //Bira se trening koji će se dodati kao event
+        console.log("CHOSEN ELEMENT", event.target.value);
         setChosenElement(event.target.value);
     };
 
     const handleAgree = () => {
-        //handles the agree button in the dialog
+        //Dugme za potvrdu u Dialogu
         setIsAgree(true);
         setIsReadOnlyEvent(false);
         setIsEditingEvent(true);
+        setIsCreatingNewEvent(false); //VIDI TREBA LI OVO
+
         console.log(
             "AGREE btn clicked",
             "isCreatingNewEvent",
@@ -533,27 +590,63 @@ function ScheduleComponent(props) {
     const [allEvents, setAllEvents] = useState([]); //contains info about all events (recurring and non-recurring)
 
     useEffect(() => {
-        //when the recurring and non-recurring events change, the all events array is updated
-        setAllEvents([
-            ...nonRecurringEvents,
-            ...recurringEvents.flatMap((event) => {
-                // console.log("EVENT", event);
-                return event.rrule.all().map((date) => {
-                    return {
-                        title: event.title,
-                        start: date,
-                        end: changeDatesTime(date, event.end, 0), //sets the end date to 1 hour after the start date
-                        extendedProps: {
-                            coach: event.extendedProps.coach, //this is used to display the coach name in the dialog
-                            ScheduleID: event.extendedProps.ScheduleID,
-                        },
-                    };
-                });
-            }),
-        ]);
+        console.log("DOSAO SAM DO OVOGA ALL EVENTA");
+        setIsLoading(true);
+        try {
+            //when the recurring and non-recurring events change, the all events array is updated
+            console.log("NON RECURRING EVENTS", ...nonRecurringEvents);
+            setAllEvents([
+                ...nonRecurringEvents,
+                ...recurringEvents.flatMap((event) => {
+                    console.log("RECC EVENT", event);
+                    return event.rrule.all().map((date) => {
+                        // setIsLoading(false);
+                        //ovo 'date' je ponavljanje datuma za svaki reccurring event nedjeljno, do kraja godine
+                        console.log("DATE", date);
+                        return {
+                            title: event.title,
+                            start: date,
+                            end: changeDatesTime(date, event.end, 0), //sets the end date to 1 hour after the start date
+                            extendedProps: {
+                                coach: event.extendedProps.coach, //this is used to display the coach name in the dialog
+                                ScheduleID: event.extendedProps.ScheduleID,
+                                "Workout Name": event.extendedProps["Workout Name"],
+                                "Workout Type": event.extendedProps["Workout Type"],
+                                "FK_WorkoutID": event.extendedProps["FK_WorkoutID"],
+                                "isRecurring": event.extendedProps["isRecurring"],
+                            },
+                        };
+                    });
+                }),
+            ]);
+        } catch (err) {
+            console.log(err);
+            props.showSnackbarMessage("error", "Greška prilikom prikazivanja događaja!")();
+        } finally {
+            setIsLoading(false); //Na kraju, kad se podaci učitaju i eventi prikažu, onda loader završava
+        }
     }, [nonRecurringEvents, recurringEvents]);
 
+    const handleDeleteEvent = () => {
+        //Brisanje događaja
+        jwtInterceptor
+            .delete(`${api_url}/schedule/${popoverScheduleID}`, { withCredentials: true })
+            .then((res) => {
+                console.log(res);
+                props.showSnackbarMessage("success", "Događaj je uspješno obrisan!")();
+            })
+            .catch((err) => {
+                console.log(err);
+                props.showSnackbarMessage("error", "Greška prilikom brisanja događaja!")();
+            })
+            .finally(() => {
+                props.handleSetFetchData(true); //force a re-render of the calendar, by changing the state in the parent component and fetching the data again
+            });
+    };
+
     const renderedWorkouts = [];
+
+    if (isLoading) return <Loader />;
 
     return (
         <>
@@ -562,16 +655,16 @@ function ScheduleComponent(props) {
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView={"dayGridMonth"}
                 headerToolbar={{
-                    //header of the calendar (case sensitive)
-                    start: "today prev,next addEventButton", //addEventButton is a custom button
+                    //zaglavlje kalendara (case sensitive) NE DIRAJ IMENA JER MORAJU BITI OVAKVA
+                    start: "today prev,next addEventButton", //addEventButton je custom button
                     center: "title",
                     end: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
                 customButtons={{
                     addEventButton: {
-                        text: "Add event",
+                        text: "Dodaj događaj",
                         click: handleNewEventCreate,
-                        hint: "Create an event!",
+                        hint: "Kreiraj novi događaj!",
                     },
                 }}
                 eventChange={handleEventMouseEnter}
@@ -602,212 +695,79 @@ function ScheduleComponent(props) {
                         handleDialogClose={handleDialogClose}
                         isDialogOpened={isDialogOpened}
                         dialogTitle={
-                            isCreatingNewEvent
-                                ? "Add new event"
-                                : popoverText + " (" + popoverCoach + ")"
-                        } //event name and coach name
-                        dialogText={
                             isCreatingNewEvent ? (
-                                //creating an event
-                                <>
-                                    <TextField
-                                        className="eventClass"
-                                        name="eventTitle"
-                                        label="Event"
-                                        onChange={handleNewEventNameChange}
-                                        value={newPopoverText}
-                                        onBlur={handleBlur}
-                                        error={!newPopoverText.length && isBlured} //input form becomes red if mail is invalid or field out of focus
-                                    />
-
-                                    <DateTimePickerComponent
-                                        className={"start-event-date-picker"}
-                                        label={"Choose a start date"}
-                                        value={startEventDate}
-                                        handleDateTimeChange={handleStartEventDateTimeChange}
-                                        disablePast={true}
-                                        disableFuture={false}
-                                        error={!startEventDate.length}
-                                        // defaultValue={dayjs().add(1, "minute")}
-                                    />
-
-                                    <DateTimePickerComponent
-                                        className={"end-event-date-picker"}
-                                        label={"Choose a end date"}
-                                        value={endEventDate}
-                                        handleDateTimeChange={handleEndEventDateTimeChange}
-                                        disablePast={true}
-                                        disableFuture={false}
-                                        error={
-                                            !endEventDate.length || endEventDate < startEventDate
-                                        }
-                                        // defaultValue={dayjs().add(61, "minute")}
-                                    />
-                                    <div className="workout-data-container">
-                                        <ColorCheckbox
-                                            labelMessage={"Assign a workout"}
-                                            handleCheckbox={handleCheckbox}
-                                        />
-
-                                        {isChecked && (
-                                            <>
-                                                <ColorCheckbox
-                                                    labelMessage={"Recurring weekly"}
-                                                    handleCheckbox={handleRecurringCheckbox}
-                                                />
-                                                <Select
-                                                    value={chosenElement || ""}
-                                                    onChange={handleChosenElementChange}
-                                                    // onBlur={handleBlurWorkout}
-                                                    // error={coach.length === 0 && isBluredCoach}
-                                                >
-                                                    {data.map((employeeElement) => {
-                                                        if (
-                                                            !renderedWorkouts.includes(
-                                                                employeeElement["FK_WorkoutID"]
-                                                            )
-                                                        ) {
-                                                            renderedWorkouts.push(
-                                                                employeeElement["FK_WorkoutID"]
-                                                            ); //only renders workouts once
-                                                            return (
-                                                                <MenuItem
-                                                                    value={employeeElement}
-                                                                    key={uuidv4()}
-                                                                >
-                                                                    {
-                                                                        employeeElement[
-                                                                            "Workout Name"
-                                                                        ]
-                                                                    }
-                                                                    {" - (" +
-                                                                        employeeElement["Name"]}
-                                                                    {" " +
-                                                                        employeeElement["Surname"] +
-                                                                        ")"}
-                                                                </MenuItem>
-                                                            );
-                                                        } else {
-                                                            return null;
-                                                        }
-                                                    })}
-                                                </Select>
-                                            </>
-                                        )}
-                                    </div>
-                                </>
-                            ) : isEditingEvent ? (
-                                <>
-                                    {/* Editing an event */} {/* ISTO KAO I KOD ADD EVENTA */}
-                                    <TextField
-                                        className="eventClass"
-                                        name="eventTitle"
-                                        label="Event"
-                                        onChange={handleEditedEventNameChange}
-                                        value={popoverText} //previous event name
-                                        onBlur={handleBlur}
-                                        error={!popoverText.length && isBlured} //input form becomes red if mail is invalid or field out of focus
-                                    />
-                                    <DateTimePickerComponent
-                                        className={"start-event-date-picker"}
-                                        label={"Choose a start date"}
-                                        // date={} //previous start date
-                                        handleDateTimeChange={handleEditedEventStartDateChange}
-                                        disablePast={true}
-                                        disableFuture={false}
-                                        error={!popoverStartDate.length}
-                                        defaultValue={dayjs(popoverStartDate)}
-                                    />
-                                    <DateTimePickerComponent
-                                        className={"end-event-date-picker"}
-                                        label={"Choose a end date"}
-                                        // date={endEventDate}
-                                        handleDateTimeChange={handleEditedEventEndDateChange}
-                                        disablePast={true}
-                                        disableFuture={false}
-                                        error={
-                                            !popoverEndDate.length ||
-                                            popoverEndDate < popoverStartDate
-                                        }
-                                        defaultValue={dayjs(popoverEndDate)}
-                                    />
-                                    <div className="workout-data-container">
-                                        <ColorCheckbox
-                                            labelMessage={"Assign a workout"}
-                                            handleCheckbox={handleCheckbox}
-                                        />
-
-                                        {isChecked && (
-                                            <>
-                                                <ColorCheckbox
-                                                    labelMessage={"Recurring weekly"}
-                                                    handleCheckbox={handleRecurringCheckbox}
-                                                />
-                                                <Select
-                                                    value={chosenElement || ""}
-                                                    onChange={handleChosenElementChange}
-                                                    // onBlur={handleBlurWorkout}
-                                                    // error={coach.length === 0 && isBluredCoach}
-                                                >
-                                                    {data.map((employeeElement) => {
-                                                        if (
-                                                            !renderedWorkouts.includes(
-                                                                employeeElement["FK_WorkoutID"]
-                                                            )
-                                                        ) {
-                                                            renderedWorkouts.push(
-                                                                employeeElement["FK_WorkoutID"]
-                                                            ); //only renders workouts once
-                                                            return (
-                                                                <MenuItem
-                                                                    value={employeeElement}
-                                                                    key={uuidv4()}
-                                                                >
-                                                                    {
-                                                                        employeeElement[
-                                                                            "Workout Name"
-                                                                        ]
-                                                                    }
-                                                                    {" - (" +
-                                                                        employeeElement["Name"]}
-                                                                    {" " +
-                                                                        employeeElement["Surname"] +
-                                                                        ")"}
-                                                                </MenuItem>
-                                                            );
-                                                        } else {
-                                                            return null;
-                                                        }
-                                                    })}
-                                                </Select>
-                                            </>
-                                        )}
-                                    </div>
-                                </>
+                                <Box>Dodaj novi događaj</Box>
                             ) : (
-                                // when a user clicks on an event, it displays the event info
-                                isReadOnlyEvent && (
-                                    <>
-                                        {/* Editing an event */}
-                                        <img
-                                            src={scheduleIcon}
-                                            style={{ width: "30px", marginRight: "5px" }}
+                                //Ime eventa (i ime trenera) koje se prikazuje u dialogu
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        justifyContent: "space-between", //ovo će postaviti ikonicu za brisanje na desnu stranu
+                                        fontSize: 23,
+                                        fontWeight: "bold",
+                                    }}
+                                >
+                                    {/* {popoverText + " (" + popoverCoach + ")"} */}
+                                    {popoverText}
+                                    {/* <Box sx={{ mr: 1, fontSize: "small" }} >{popoverCoach}</Box> */}
+                                    {/* Dugme obriši se samo prikazuje kad se događaj edituje */}
+                                    {isEditingEvent && (
+                                        <ButtonIcon
+                                            label={"Obriši"}
+                                            startIcon={<DeleteForeverIcon sx={{ mr: -1 }} />}
+                                            sx={{ color: "#ff3200", fontSize: 15 }}
+                                            handleClick={handleDeleteEvent}
                                         />
-                                        <>
-                                            {moment(popoverStartDate).format(
-                                                "DD MMMM, YYYY (HH:mm"
-                                            ) +
-                                                "h" +
-                                                " - " +
-                                                moment(popoverEndDate).format("HH:mm") +
-                                                "h)"}
-                                        </>
-                                    </>
+                                    )}
+                                </Box>
+                            )
+                        }
+                        dialogText={
+                            isCreatingNewEvent || isEditingEvent ? (
+                                //Kreiranje novog događaja
+                                
+                                    // {/* Editing an event */} {/* ISTO KAO I KOD ADD EVENTA */}
+                                <AddEditEventComponent
+                                    popoverText={popoverText}
+                                    popoverStartDate={popoverStartDate}
+                                    popoverEndDate={popoverEndDate}
+                                    isChecked={isChecked}
+                                    handleEditedEventNameChange={handleEditedEventNameChange}
+                                    handleEditedEventStartDateChange={
+                                        handleEditedEventStartDateChange
+                                    }
+                                    handleEditedEventEndDateChange={
+                                        handleEditedEventEndDateChange
+                                    }
+                                    handleCheckbox={handleCheckbox}
+                                    handleRecurringCheckbox={handleRecurringCheckbox}
+                                    handleChosenElementChange={handleChosenElementChange}
+                                    chosenElement={chosenElement}
+                                    isBlured={isBlured}
+                                    handleBlur={handleBlur}
+                                    popoverIsRecurring={popoverIsRecurring} //ovo je default vrijednost checkboxa (da li je event recurring ili ne)
+                                    isCreatingNewEvent={isCreatingNewEvent}
+                                    isEditingEvent={isEditingEvent}    
+                                />
+                                
+                            ) : (
+                                // Kad se klikne na event, ali se ne edituje (samo se prikazuju informacije)
+                                isReadOnlyEvent && (
+                                    <ReadOnlyEventComponent
+                                        popoverStartDate={popoverStartDate}
+                                        popoverEndDate={popoverEndDate}
+                                        popoverCoach={popoverCoach}
+                                        popoverWorkoutName={popoverWorkoutName} //ovo je ime treninga koje se prikazuje u dialogu
+                                        popoverWorkoutType={popoverWorkoutType}  //ovo je tip treninga koje se prikazuje u dialogu
+  
+                                    />
                                 )
                             )
                         }
-                        disagree={"Cancel"}
-                        agree={isCreatingNewEvent ? "Add" : isReadOnlyEvent ? "Edit" : "Update"}
+                        disagree={"Otkaži"}
+                        agree={isCreatingNewEvent ? "Dodaj" : isReadOnlyEvent ? "Izmijeni" : "Sačuvaj izmjene"}
                         handleAgree={isEditingEvent ? handleUpdateEvent : handleAgree}
                         showButton={false}
                         disableAgreeBtn={

@@ -17,7 +17,7 @@ function Register(props) {
 
     const handleStepValue = () => {
         if (step + 1 <= steps.length) setStep(step + 1);
-        else step = steps.length - 1; //because steps start at 0
+        else step = steps.length - 1; //jer koraci pocinju od 0
     };
 
   
@@ -32,7 +32,8 @@ function Register(props) {
         "Informacije o nalogu",
     ];
 
-    const steps = user.isClient ? stepsClient : stepsEmployee; //koraci na stepperu
+    //ako nema ulogovanog korisnika, onda je klijent u pitanju i pokušava da se registruje
+    const steps = !user ? stepsClient : stepsEmployee ; //koraci na stepperu
 
     const [client, setClient] = useState({});
     const [employee, setEmployee] = useState({});
@@ -41,6 +42,7 @@ function Register(props) {
     const [membership, setMembership] = useState({});
     const [personalCoach, setPersonalCoach] = useState({});
     const [gym, setGym] = useState({});
+
 
     const handleClient = (newClient) => {
         setClient(newClient);
@@ -89,6 +91,7 @@ function Register(props) {
                     handleClient={handleClient}
                     handleEmployee={handleEmployee}
                     handleGym={handleGym}
+                    isAdmin={user && user.isAdmin ? true : false} //ako je ulogovan i ako je admin
                 />
             )}
 
@@ -100,7 +103,8 @@ function Register(props) {
                  />
             )}
             
-            {step === 2 && user.isClient &&
+            {/* Prikazuje se samo ako korisnik nije ulogovan, tj. samo ako klijent pokušava da kreira nalog */}
+            {step === 2 && !user &&
                 <MembershipRegister
                     step={step}
                     handleStepValue={handleStepValue}
@@ -115,7 +119,7 @@ function Register(props) {
                     handleMembership={handleMembership}
                     handlePersonalCoach={handlePersonalCoach}
                     gym={gym}
-                    isAdmin={user.isAdmin}
+                    isAdmin={user && user.isAdmin ? true : false} //moram dodati uslov da je user ulogovan
                 />
             }
                 

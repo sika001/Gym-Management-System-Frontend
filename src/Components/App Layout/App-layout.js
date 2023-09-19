@@ -4,35 +4,35 @@ import Footer from "../Footer/Footer";
 import "./App-layout.css";
 import { AuthContextProvider } from "../Auth Context/AuthContext";
 import { SnackbarProvider } from "notistack";
-import dotenv from 'dotenv';
-dotenv.config();
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "../../theme"; // Import the theme file
 
 function AppLayout() {
     const height = 70;
     const marginTop = 100;
 
-    const api_url = process.env.REACT_APP_API_URL;
-
     return (
-        //IZMIJENITI CSS DEBILU
-        <SnackbarProvider maxSnack={3}>
-            <AuthContextProvider>
-                {/* Auth Context Provider allows the user profile (from localstorage) to be used elsewhere */}
-                <div className="app-container">
-                    <aside className="side-bar" style={{ height: height + "%" }}>
-                        <SideBar />
-                    </aside>
 
-                    <main className="main-container">
-                        {/* This is the place where the content of the child component will be rendered*/}
-                        <Outlet />
-                    </main>
-                    <footer style={{ marginTop: marginTop + "%" }}>
-                        <Footer />
-                    </footer>
-                </div>
-            </AuthContextProvider>
-        </SnackbarProvider>
+        <ThemeProvider theme={theme}>
+            <SnackbarProvider maxSnack={5}>
+                <AuthContextProvider>
+                    {/* Auth Context Provider allows the user profile (from localstorage) to be used elsewhere */}
+                    <div className="app-container">
+                        <aside className="side-bar" style={{ height: height + "%" }}>
+                            <SideBar />
+                        </aside>
+
+                        <main className="main-container">
+                            {/* This is the place where the content of the child component will be rendered*/}
+                            <Outlet />
+                        </main>
+                        <footer style={{ marginTop: marginTop + "%" }}>
+                            <Footer />
+                        </footer>
+                    </div>
+                </AuthContextProvider>
+            </SnackbarProvider>
+        </ThemeProvider>
     );
 }
 

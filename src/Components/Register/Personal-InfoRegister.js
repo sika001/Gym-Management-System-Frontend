@@ -16,12 +16,11 @@ import axios from "axios";
 import moment from "moment";
 import { Input, InputAdornment, InputLabel } from "@mui/material";
 import AuthContext from "../Auth Context/AuthContext";
-import dotenv from 'dotenv';
-dotenv.config();
+import Loader from "../../Utilities/Loader/Loader";
 
 function PersonalInfoRegister(props) {
     const { user } = useContext(AuthContext); //ulogovani korisnik
-    
+
     const api_url = process.env.REACT_APP_API_URL;
 
     const [name, setName] = useState("");
@@ -37,9 +36,9 @@ function PersonalInfoRegister(props) {
     const [gym, setGym] = useState("");
     const [file, setFile] = useState("");
     const [fileName, setFileName] = useState("");
-    const [salary, setSalary] = useState(450); 
+    const [salary, setSalary] = useState(450);
     const [employeeType, setEmployeeType] = useState([]);
-    const [selectedEmployeeType, setSelectedEmployeeType] = useState(null)
+    const [selectedEmployeeType, setSelectedEmployeeType] = useState(null);
 
     const [isValidName, setisValidName] = useState(true);
     const [isValidSurname, setIsValidSurname] = useState(true);
@@ -50,7 +49,7 @@ function PersonalInfoRegister(props) {
     const [isBluredCountry, setIsBluredCountry] = useState(false); //need multiple states because of multiple selects
     const [isBluredGym, setIsBluredGym] = useState(false);
     const [isBluredEmployeeType, setIsBluredEmployeeType] = useState(false);
-    
+
     const [isClicked, setIsClicked] = useState(false);
 
     useEffect(() => {
@@ -64,28 +63,29 @@ function PersonalInfoRegister(props) {
     }, [isClicked]);
 
     useEffect(() => {
-        if(!user.isAdmin) return;
+        if (!props.isAdmin) return;
         // dovlači tip zaposlenog (trener, recepcionar...)
         //ne treba jwtInterceptor jer je ruta otvorena za sve
-        axios.get(`${api_url}/employee/type`)
+        axios
+            .get(`${api_url}/employee/type`)
             .then((res) => {
                 setEmployeeType(res.data);
                 console.log("EMPLOYEE TYPE: ", res.data);
             })
             .catch((err) => {
-                console.log(err)
+                console.log(err);
             });
     }, []);
 
     useEffect(() => {
-        if(!employeeType){
+        if (!employeeType) {
             console.log("LOADING");
-            return <p>Loading...</p>
+            return <Loader />;
         }
-    },[]);
+    }, []);
 
     const handleUser = () => {
-         //Not using objects, but formData, because of the file upload
+        //Not using objects, but formData, because of the file upload
         const userFD = new FormData();
         userFD.append("Name", name);
         userFD.append("Surname", surname);
@@ -95,18 +95,19 @@ function PersonalInfoRegister(props) {
         userFD.append("FK_WorkoutID", null);
         userFD.append("Picture", file);
         userFD.append("PictureName", fileName); //sends the file name to the backend as well (needed for multer)
-        userFD.append("FK_GymID", gym.ID)
-        userFD.append("FK_EmployeeTypeID", selectedEmployeeType.ID) // 1 - coach, 2 - receptionist
+        userFD.append("FK_GymID", gym.ID);
 
         //pushes user (client or employee) information  to parent component
-        if(user.isAdmin){
-            userFD.append("Salary", salary)
-            props.handleEmployee(userFD)            
-        }else{
-            props.handleClient(userFD)
+        if (user && user.isAdmin) {
+            //ako je admin, kreiraj zaposlenog (mora biti ulogovan zato ide uslov za user &&)
+            userFD.append("FK_EmployeeTypeID", selectedEmployeeType.ID); // 1 - coach, 2 - receptionist
+            userFD.append("Salary", salary);
+            props.handleEmployee(userFD);
+        } else {
+            props.handleClient(userFD);
         }
     };
-    
+
     const handleClick = () => {
         setIsClicked(true);
     };
@@ -208,7 +209,6 @@ function PersonalInfoRegister(props) {
         setFileName(newFile.name);
     };
 
-
     useEffect(() => {
         const getAllCountries = axios
             .get(`${api_url}/country`)
@@ -233,9 +233,9 @@ function PersonalInfoRegister(props) {
         if (city === "") return;
         //NAPRAVITI DA
         //ako je korisnik admin, dovuci sve njegove teretane, inače, dovuci sve teretane u gradu
-    
+
         axios
-            .get(`${api_url}/gym/${city.ID}`) 
+            .get(`${api_url}/gym/${city.ID}`)
             .then((res) => setGymsData(res.data))
             .catch((err) => console.log(err));
     }, [city]);
@@ -369,40 +369,42 @@ function PersonalInfoRegister(props) {
                 <p>{file ? file.name : "No photo selected!"}</p>
             </div>
 
-            <FormControl sx={{ m: 1, minWidth: 120}} variant="standard">
-                <InputLabel htmlFor="salary-amount">Iznos zarade</InputLabel>
-                <Input
-                    id="salary-amount"
-                    endAdornment={<InputAdornment position="end">€</InputAdornment>} //€ na pocetku polja
-                    value={salary}
-                    onChange={handleSalaryChange}
-                />
-            </FormControl>
+            {/* Pošto koriste iste komponente, ovaj dio o zaradama se prikazuje samo za Admina*/}
+            {props.isAdmin && (
+                <>
+                    <FormControl sx={{ m: 1, minWidth: 120 }} variant="standard">
+                        <InputLabel htmlFor="salary-amount">Iznos zarade</InputLabel>
+                        <Input
+                            id="salary-amount"
+                            endAdornment={<InputAdornment position="end">€</InputAdornment>} //€ na pocetku polja
+                            value={salary}
+                            onChange={handleSalaryChange}
+                        />
+                    </FormControl>
 
-            <FormControl sx={{ m: 1, minWidth: 120}} variant="standard">
-                <InputLabel htmlFor="employee-type">Employee Type</InputLabel>
-                <Select
-                    value= {""} 
-                    onChange={handleEmployeeTypeChange}
-                    onClick={() => setIsBluredEmployeeType(true)}
-                    error={employeeType && employeeType.length === 0 && isBluredEmployeeType}
-                >
-
-                    {employeeType && employeeType.map((employeeTypeEl) => {
-                        return (
-                         // Set the value to the selected employeeType
-                            <MenuItem value={employeeTypeEl} key={uuidv4()}>
-                                {employeeTypeEl.Type}
-                            </MenuItem>
-                        )
-                
-                    })
-                    }
-
-                    
-                </Select>
-            </FormControl>
-
+                    <FormControl sx={{ m: 1, minWidth: 120 }} variant="standard">
+                        <InputLabel htmlFor="employee-type">Employee Type</InputLabel>
+                        <Select
+                            value={selectedEmployeeType || ""}
+                            onChange={handleEmployeeTypeChange}
+                            onClick={() => setIsBluredEmployeeType(true)}
+                            error={
+                                employeeType && employeeType.length === 0 && isBluredEmployeeType
+                            }
+                        >
+                            {employeeType &&
+                                employeeType.map((employeeTypeEl) => {
+                                    return (
+                                        // Set the value to the selected employeeType
+                                        <MenuItem value={employeeTypeEl} key={uuidv4()}>
+                                            {employeeTypeEl.Type}
+                                        </MenuItem>
+                                    );
+                                })}
+                        </Select>
+                    </FormControl>
+                </>
+            )}
 
             <div className="submit">
                 <Button
@@ -428,8 +430,6 @@ function PersonalInfoRegister(props) {
                     Dalje
                 </Button>
             </div>
-
-            
         </>
     );
 }

@@ -4,29 +4,34 @@ import jwtInterceptor from "../../../Utilities/Interceptors/jwtInterceptor";
 import { BarChart } from "../../../Utilities/Charts/Charts";
 import moment from "moment";
 import { BasicDatePicker } from "../../../Utilities/DatePickers/datepickers";
-import "./Attendance.css";
-import dotenv from 'dotenv';
-dotenv.config();
+import Loader from "../../../Utilities/Loader/Loader";
+import { Box, Typography } from "@mui/material";
+import { useTheme } from "@emotion/react";
+
 
 function Attendance(props) {
     const { user } = useContext(AuthContext);
     const api_url = process.env.REACT_APP_API_URL;
 
-    const [isLoading, setIsLoading] = useState(false);
+    // const [isLoading, setIsLoading] = useState(false);
     const [arrivalData, setArrivalData] = useState(null);
     const [chartData, setChartData] = useState(null);
 
-    const [dateStart, setDateStart] = useState(0);
+    const [dateStart, setDateStart] = useState(0); //PROVJERITI DA LI JE OVO OK
     const [dateEnd, setDateEnd] = useState(undefined); //this will be set to the current date, on backend
     const [averageTimeSpent, setAverageTimeSpent] = useState(0);
+
+    const theme = useTheme();
 
     useEffect(() => {
         async function getArrivals() {
             //returns all arrivals for a user in a certain time period
-            setIsLoading(true);
+            // setIsLoading(true);
+            const url = !user.isClient ? `${api_url}/arrival/get/all` : `${api_url}/arrival/get`;
+            console.log("Start date:", dateStart, "End date:", dateEnd);
             await jwtInterceptor
                 .post(
-                    `${api_url}/arrival/get/${user.ID}`,
+                    `${url}/${user.ID}`, //u zavisnosti od toga da li je admin ili ne, dobijaju se razliciti podaci
                     {
                         startDate: dateStart, //even if dateStart is 0, it will still work because endDate is hardcoded in the backend
                         endDate: dateEnd,
@@ -43,7 +48,7 @@ function Attendance(props) {
                     console.log(err);
                 })
                 .finally(() => {
-                    setIsLoading(false);
+                    // setIsLoading(false);
                 });
 
 
@@ -51,7 +56,7 @@ function Attendance(props) {
 
         async function getClientsMembership() {
             //returns clients membership details
-            setIsLoading(true);
+            // setIsLoading(true);
             await jwtInterceptor
                 .get(
                     `${api_url}/membership/${user.ID}`, //represents arrival time of a user
@@ -81,7 +86,7 @@ function Attendance(props) {
                                     console.log(err);
                                 })
                                 .finally(() => {
-                                    setIsLoading(false);
+                                    // setIsLoading(false);
                                 });
 
                         }
@@ -90,50 +95,40 @@ function Attendance(props) {
                 .catch((err) => {
                     console.log(err);
                 }).finally(() => {
-                    setIsLoading(false);
+                    // setIsLoading(false);
                 });
         }
 
         getClientsMembership();
         getArrivals();
-    }, [user]);
+    }, [user, dateStart, dateEnd]);
 
     const handleAverageTimeSpent = (minutes) => {
         setAverageTimeSpent((prevTimeSpent) => prevTimeSpent + minutes);
     };
 
     useEffect(() => {
-        if (!arrivalData || isLoading) return;
+        // if (!arrivalData || isLoading) return;
+        if (!arrivalData) return; //VRAITI OVO KAD SE SREDI LOADER
         //creating the chart
         setAverageTimeSpent(0); //resetting average time spent
         console.log("Arrival data:", arrivalData);
         setChartData({
             labels: arrivalData.map((arrData) => {
-                //x-axis
-                const day = new Date(arrData.ArrivalTime).getDate();
-                const dayWithoutZeros = day.toString().replace(/^0+/, ""); // if a day is 01, it will be converted to 1
-
-                return dayWithoutZeros;
-            }),
+                        //x-axis
+                        const day = new Date(arrData.Day).getDate();
+                        // const dayWithoutZeros = day.toString().replace(/^0+/, ""); // if a day is 01, it will be converted to 1
+                        return day;
+                    }),
             datasets: [
                 {
-                    label: "Time spent in gym (minutes)",
+                    label: "Vrijeme provedeno u teretani (minuti)",
                     data: arrivalData.map((arrData) => {
-                        //y-axis
-                        //returns number of minutes spent in the gym
-                        const arrivalTime = new Date(arrData.ArrivalTime);
-                        if (arrData.DepartureTime === null) {
-                            //This means that the user is still in the gym
-                            return Math.round((new Date() - new Date(arrData.ArrivalTime)) / 60000);
-                        }
-                        const departureTime = new Date(arrData.DepartureTime);
-                        const timeDifferenceInMilliseconds = departureTime - arrivalTime;
+                            const avgTime = arrData.TotalTimeInMinutes
+                            handleAverageTimeSpent(avgTime); // za izracunavanje prosječnog vremena
 
-                        const minutesSpent = Math.round(timeDifferenceInMilliseconds / 60000);
-                        handleAverageTimeSpent(minutesSpent);
-
-                        return minutesSpent;
-                    }),
+                            return avgTime;
+                        }),
                     backgroundColor: ["#a6e6bf"],
                     hoverBackgroundColor: ["#5be49b"],
                     borderColor: "#007867",
@@ -145,64 +140,75 @@ function Attendance(props) {
 
     const handleStartDate = (date) => {
         const start = moment(date.$d).format("YYYY-MM-DD"); //this format is in dabatabase
+        console.log("Start date change:", start);
         setDateStart(start);
     };
 
     const handleEndDate = (date) => {
         const end = moment(date.$d).format("YYYY-MM-DD"); //this format is in dabatabase
+        console.log("End date change:", end);
         setDateEnd(end);
     };
 
 
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
+    // if (isLoading) {
+    //     return <Loader />
+    // }
 
     return (
-        <div className="attendance-container">
-            <div className="title">
-                <h2>Attendance</h2>
-            </div>
-            <div className="date-range">
-                <div className="BasicDatePicker">
+        <Box  className="attendance-container"  
+            sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', 
+                border: '1px solid #E0E0E0', borderRadius: '10px',
+                // boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.2)',
+            }}
+        >
+            <Typography variant="h4" sx={{m: 3, ...theme.title}} >
+                Prisustvo
+            </Typography>            
+        
+
+            <Box className="date-range" sx={{display: 'flex', flexDirection: 'row', justifyContent: 'space-evenly', width: '100%', mb:3}}>
+                <Box className="BasicDatePicker">
                     <BasicDatePicker
                         handleDateChange={handleStartDate}
-                        label="Date Start"
+                        label="Početni datum"
                         disableFuture={true}
                         disablePast={false}
                     />
-                </div>
-                <div className="BasicDatePicker">
+                </Box>
+                <Box className="BasicDatePicker">
                     <BasicDatePicker
                         handleDateChange={handleEndDate}
-                        label="Date End"
+                        label="Krajnji datum"
                         disableFuture={true}
                         disablePast={false}
                     />
-                </div>
-            </div>
-            {/* Rendering chart */}
-               {!isLoading && chartData && arrivalData &&
-                    <div className="bar-chart-container">
+                </Box>
+            </Box>
+            {/* Renderovanje chart-a za posjetu */}
+            {chartData && arrivalData && 
+                <Box className="bar-chart-container"
+                    sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',
+                     width: '60vw', height: '50vh', mb: 5}}
+                >
                     <BarChart
                         chartData={chartData}
-                        barPercentage={0.5} //bar width
-                        labelX="Day of the Month"
-                        labelY="Time spent (minutes)"
-                        color={"#007867"} //color of the labels
-                        font={{ size: "16" }} //font of the labels
+                        barPercentage={0.5} //širina linije
+                        labelX="Dani u mjesecu"
+                        labelY="Vrijeme (minuti)"
+                        color={"#007867"} //boja labela
+                        font={{ size: "16" }} //font labele
                     />
-                    <div className="average-time-spent">
-                        <h4>
-                            Average time spent in gym:{" "}
-                            {averageTimeSpent / (!arrivalData ? 1 : arrivalData.length)}{" "}
-                            minutes
-                        </h4>
-                    </div>
-                </div>
-                }
+                    <Box className="average-time-spent">
+                        <Typography variant="p" sx={{fontSize: 15}}>
+                            Prosječno vrijeme provedeno u teretani:{" "}
+                            {Math.round(averageTimeSpent / (arrivalData.length || 1))} minuta
+                        </Typography>
+                    </Box>
+                </Box>
+            }
             
-        </div>
+        </Box>
     );
 }
 

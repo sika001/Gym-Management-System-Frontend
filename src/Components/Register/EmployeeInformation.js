@@ -4,8 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Button, FormControl, FormHelperText, Grid, Input, InputAdornment, InputLabel, MenuItem, Paper, Select, styled } from "@mui/material";
 import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
 import { useSnackbar } from "notistack";
-import dotenv from 'dotenv';
-dotenv.config();
+
 
 ///OBRISATI KOMPONENTU
 

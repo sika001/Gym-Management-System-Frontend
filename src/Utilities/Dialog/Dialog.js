@@ -40,10 +40,10 @@ function DialogComponent(props) {
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={props.handleDialogClose} disabled={props.disableDisagreeBtn}>
+                    <Button onClick={props.handleDialogClose} disabled={props.disableDisagreeBtn} sx={props.sxDisagree}>
                         {props.disagree}
                     </Button>
-                    <Button onClick={props.handleAgree} disabled={props.disableAgreeBtn}>
+                    <Button onClick={props.handleAgree} disabled={props.disableAgreeBtn} sx={props.sxAgree}>
                         {props.agree}
                     </Button>
                 </DialogActions>

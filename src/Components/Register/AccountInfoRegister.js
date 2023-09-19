@@ -5,14 +5,12 @@ import Button from "@mui/material/Button";
 import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
 import { useSnackbar } from "notistack";
 import AuthContext from "../Auth Context/AuthContext";
-import dotenv from 'dotenv';
-dotenv.config();
 
 
 function AccountInfoRegister(props) {
 
     const {user} = useContext(AuthContext);
-    const [isAdmin] = useState(user.isEmployee); //ako je admin kreira se zaposleni, inače klijent nastavlja na sljedeći korak
+    const [isAdmin] = useState(user && user.isAdmin ? true : false); //ako je admin kreira se zaposleni, inače klijent nastavlja na sljedeći korak
     
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -108,7 +106,7 @@ function AccountInfoRegister(props) {
         role.append("Password", password);
 
         //ako admin registruje zaposlenog, onda je isEmployee = 1, inače, ako se klijent sam registruje, onda je isClient = 1
-        props.isAdmin ? role.append("isEmployee", 1) : role.append("isClient", 1); 
+        isAdmin ? role.append("isEmployee", 1) : role.append("isClient", 1); 
 
         props.handleRole(role);
     };

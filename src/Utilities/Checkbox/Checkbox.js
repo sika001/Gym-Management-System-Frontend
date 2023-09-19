@@ -14,6 +14,7 @@ function ColorCheckbox(props) {
                         color: green[600],
                     },
                 }}
+                defaultChecked={props.defaultChecked}
             />
             <label htmlFor="checkbox">{props.labelMessage}</label>
         </div>

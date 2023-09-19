@@ -1,14 +1,16 @@
 import React, { useContext, useEffect } from "react";
 import moment from "moment";
 import { useState } from "react";
-import "./MembershipInfo.css";
 import renewalIcon from "../../../images/renewal (1).png";
 import DialogComponent from "../../../Utilities/Dialog/Dialog";
 import jwtInterceptor from "../../../Utilities/Interceptors/jwtInterceptor";
 import AuthContext from "../../Auth Context/AuthContext";
 import { useSnackbar } from "notistack";
-import dotenv from 'dotenv';
-dotenv.config();
+import Loader from "../../../Utilities/Loader/Loader";
+import { Box } from "@mui/system";
+import { Typography } from "@mui/material";
+import { useTheme } from "@emotion/react";
+
 
 function MembershipInfo(props) {
 
@@ -19,6 +21,8 @@ function MembershipInfo(props) {
     const [isAgree, setIsAgree] = useState(false);
 
     const { enqueueSnackbar } = useSnackbar(); //this is used for displaying a snackbar message
+
+    const theme = useTheme();
 
     const showSnackbarMessage = (variant, message) => () => {
         // variant could be success, error, warning, info, or default
@@ -68,9 +72,7 @@ function MembershipInfo(props) {
                         .post(
                             `${api_url}/transaction`,
                             {
-                                Amount:
-                                    props.memberships[0].Price +
-                                    props.memberships[0]["Employee Price"],
+                                Amount:props.memberships[0].Price + props.memberships[0]["Employee Price"],
                                 Date: currDateTime,
                                 FK_TransactionTypesID: 1, //1 - membership renewal
                                 FK_ClientID: user.ID, //POSTAVITI USLOV DA SE OVO IZVUCE IZ COOKIE-a, ILI EMPLOYEEID AKO JE ZAPOSLENI
@@ -91,101 +93,123 @@ function MembershipInfo(props) {
     }, [isAgree]);
 
     return (
-        <div className="membership-container">
-            <div className="title">
-                <h2>Membership</h2>
-            </div>
+        <Box sx={{mt: 4}}>
+            <Box sx={{mt: 4, mb: 3, textAlign: 'center'}} >
+                <Typography sx={{fontWeight: 'bold', fontSize: 30, color: theme.palette.primaryGreen.darkGreen}} > 
+                    Podaci o članarini 
+                </Typography>
+            </Box>
 
-            <div className="membership-info-wrapper">
+            <Box sx={{border: `1px solid ${theme.palette.primaryGrey.light}`, borderRadius: 5, p: 3,
+                        boxShadow: theme.boxShadows.primary}}>
                 {props.memberships.length !== 0 ? (
                     props.memberships.map((memEl, index) => (
-                        <div key={memEl.ID} className="membership-info-container">
-                            <div className="workout-container">
-                                <h4>{memEl["Workout Name"]}</h4>
-                                <h5>
-                                    (Workout type will be here){" "}
-                                    {memEl["FK_EmployeeID"] ? memEl["Workout Type"] : null}
-                                </h5>
-                            </div>
-                            <div className="date-container">
-                                <h4>Start Date: {moment(memEl.StartDate).format("DD-MM-YYYY")}</h4>
-                                <h4>End Date: {moment(memEl.ExpiryDate).format("DD-MM-YYYY")} </h4>
-                                <h5>
-                                    {moment(memEl.ExpiryDate).diff(new Date(), "days") >= 0
-                                        ? `Valid ${moment(memEl.ExpiryDate).diff(
-                                              new Date(),
-                                              "days"
-                                          )}  more days!`
-                                        : "Expired!"}
-                                </h5>
-                            </div>
 
-                            <div className="membership-details-container">
-                                <h4>
-                                    Total price: {memEl.Price + memEl["Employee Price"]}€ /{" "}
-                                    {memEl["Membership Type"]}
-                                </h4>
-                                {/* Renew button is displayed only on the latest memebership (if expired) */}
-                                {index === 0 &&
-                                //OVO PROMIJENITI
-                                moment(memEl.ExpiryDate).diff(new Date(), "days") >= 0 ? (
-                                    <DialogComponent
-                                        label={"Renew"}
-                                        disabled={true}
-                                        icon={<img src={renewalIcon} style={{ width: "35px" }} />}
-                                        style={{
-                                            backgroundColor: "#cccccc",
-                                            color: "#666666",
-                                            border: "0px solid black",
-                                        }}
-                                        handleDialogOpen={handleDialogOpen}
-                                        handleDialogClose={handleDialogClose}
-                                        isDialogOpened={isDialogOpened}
-                                        dialogTitle={"Renew membership"}
-                                        dialogText={`Are you sure you want to renew your membership? You will be charged ${
-                                            memEl.Price + memEl["Employee Price"]
-                                        }€ for the renewal.`}
-                                        disagree={"No"}
-                                        agree={"Yes"}
-                                        handleAgree={handleAgree}
-                                        showButton={true}
-                                    />
-                                ) : (
-                                    // if the membership is expired, display the renew button
-                                    index === 0 && (
+                        <Box key={memEl.ID}>
+
+                            <Box sx={{display: 'flex', flexDirection: 'column', 
+                                    borderBottom: `1px solid ${theme.palette.primaryGrey.light}`, p: 1 }}>
+                               
+                                <Typography sx={{fontSize: 22, fontWeight: 'bold', color: theme.palette.primaryGreen.darkGreen}}>
+                                    {memEl["Workout Name"]}
+                                </Typography>
+                                {
+                                    memEl["Workout Type"] &&
+                                    <Typography sx={{fontSize: 16, fontStyle: 'italic', color: theme.palette.primaryGreen.darkGreen}}>
+                                        {memEl["Workout Type"]}
+                                    </Typography>
+                                }
+                            </Box>
+
+                            <Box sx={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', p: 5}}                            >
+                                <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}> 
+                                    <Typography sx={{fontSize: 17, color: theme.palette.primaryGrey.darkGrey}}>
+                                        Datum uplate
+                                    </Typography>
+                                    <Typography variant="h6" sx={{mt: 0.6}}>
+                                        {moment(memEl.StartDate).format("DD-MMM-YYYY")}
+                                    </Typography> 
+                                </Box>
+                                
+                               <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                    <Typography sx={{fontSize: 17, color: theme.palette.primaryGrey.darkGrey}}>
+                                        Datum isteka
+                                    </Typography>
+                                    <Typography variant="h6">{moment(memEl.ExpiryDate).format("DD-MMM-YYYY")} </Typography>
+                                    <Typography sx={{fontSize: 16, color: theme.palette.primaryGrey.darkGrey, mt: 0.6}}>
+                                        {moment(memEl.ExpiryDate).diff(new Date(), "days") >= 0
+                                            ? 
+                                            `Validna još ${moment(memEl.ExpiryDate).diff(new Date(),"days")} dana!`
+                                            : "Članarina je istekla!"}
+                                    </Typography>
+                                </Box>
+
+                                <Box sx={{display: 'flex', flexDirection: 'column-reverse', alignItems: 'center', }}>
+                                    <Typography sx={{mt: 1, }}>
+                                        Ukupna cijena: {memEl.Price + memEl["Employee Price"]}€ /{" "}
+                                        {memEl["Membership Type"]}
+                                    </Typography>
+                                    {/* Dugme 'Obnovi' se prikazuje samo za posljednju članarinu (kad istekne) */}
+                                    {index === 0 &&
+                                        moment(memEl.ExpiryDate).diff(new Date(), "days") >= 0 
+                                    ? (
                                         <DialogComponent
-                                            label={"Renew"}
-                                            disabled={false}
-                                            icon={
-                                                <img src={renewalIcon} style={{ width: "35px" }} />
-                                            }
+                                            label={"Obnovi"}
+                                            disabled={true}
+                                            icon={<img src={renewalIcon} style={{ width: "40px" }} />}
                                             style={{
-                                                backgroundColor: "rgba(17,141,87,255)",
-                                                color: "white",
-                                                border: "1px solid black",
+                                                backgroundColor: theme.palette.primaryGrey.light,
+                                                color: theme.palette.primaryGrey.darkGrey,
+                                                border: `1px solid ${theme.palette.primaryGrey.light}`
                                             }}
                                             handleDialogOpen={handleDialogOpen}
                                             handleDialogClose={handleDialogClose}
                                             isDialogOpened={isDialogOpened}
-                                            dialogTitle={"Renew membership"}
-                                            dialogText={`Are you sure you want to renew your membership? You will be charged ${
-                                                memEl.Price + memEl["Employee Price"]
-                                            }€ for the renewal.`}
-                                            disagree={"No"}
-                                            agree={"Yes"}
+                                            dialogTitle={"Obnovi članarinu"}
+                                            dialogText={`Da li ste sigurni da želite da obnovite članarinu za '${memEl["Workout Name"]}', 
+                                                        u iznosu od ${memEl.Price + memEl["Employee Price"]}€?
+                                                        `}
+                                            disagree={"Odustani"}
+                                            agree={"Potvrdi"}
                                             handleAgree={handleAgree}
                                             showButton={true}
                                         />
-                                    )
-                                )}
-                            </div>
-                        </div>
+                                    ) : (
+                                        // ako je istekla članarina, prikazati dugme za obnovu
+                                        index === 0 && (
+                                            <DialogComponent
+                                                label={"Obnovi"}
+                                                disabled={false}
+                                                icon={
+                                                    <img src={renewalIcon} style={{ width: "35px" }} />
+                                                }
+                                                style={{
+                                                    backgroundColor: "#008050",
+                                                    color: "white",
+                                                    border: `1px solid ${theme.palette.primaryGrey.light}`,
+                                                }}
+                                                handleDialogOpen={handleDialogOpen}
+                                                handleDialogClose={handleDialogClose}
+                                                isDialogOpened={isDialogOpened}
+                                                dialogTitle={"Obnova članarine"}
+                                                dialogText={`Da li ste sigurni da želite da obnovite članarinu za '${memEl["Workout Name"]}', 
+                                                u iznosu od ${memEl.Price + memEl["Employee Price"]}€?`}
+                                                disagree={"Odustani"}
+                                                agree={"Potvrdi"}
+                                                handleAgree={handleAgree}
+                                                showButton={true}
+                                            />
+                                        )
+                                    )}
+                                </Box>
+                            </Box>
+                        </Box>
                     ))
                 ) : (
-                    <h1>Loading...</h1>
+                    <Loader />
                 )}
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 }
 

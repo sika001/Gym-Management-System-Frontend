@@ -2,25 +2,27 @@ import axios from "axios";
 import { createContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import dotenv from 'dotenv';
-dotenv.config();
+import Loader from "../../Utilities/Loader/Loader";
+
 
 const AuthContext = createContext();
 
 export function AuthContextProvider({ children }) {
 
-    const api_url = process.env.API_URL;
-    const { enqueueSnackbar } = useSnackbar(); //this is used for displaying a snackbar message
+    const api_url = process.env.REACT_APP_API_URL;
+
+    const [isLoading, setIsLoading] = useState(false); 
+    const { enqueueSnackbar } = useSnackbar(); //koristi se sa snackbar obavještenja
     const showSnackbarMessage = (variant, message) => () => {
-        // variant could be success, error, warning, info, or default
+        // variant može biti: success, error, warning, info, default
         enqueueSnackbar(message, {
             variant,
             autoHideDuration: 2000,
-            anchorOrigin: { vertical: "top", horizontal: "center" }, //snackbar position
+            anchorOrigin: { vertical: "top", horizontal: "center" }, //snackbar pozicija
         });
     };
 
-    const [user, setUser] = useState(() => { //this is used for storing the user profile
+    const [user, setUser] = useState(() => { //sadrži usera iz local storage-a
         let userProfle = localStorage.getItem("userProfile");
 
         if (userProfle) {
@@ -33,6 +35,7 @@ export function AuthContextProvider({ children }) {
 
     //main login function
     const login = async (payload) => {
+        setIsLoading(true);
         await axios
             .post(`${api_url}/login`, payload, {
                 withCredentials: true,
@@ -49,6 +52,9 @@ export function AuthContextProvider({ children }) {
             .catch((err) => {
                 showSnackbarMessage("error", "Wrong email or password!")(); //show snackbar message
                 console.log("Wrong email or password ddd!", err);
+            })
+            .finally(() => {
+                setIsLoading(false);
             });
     };
 
@@ -68,6 +74,10 @@ export function AuthContextProvider({ children }) {
             });
     };
 
+    if(isLoading) {
+        return <Loader />
+    }
+    
     return (
         <>
             <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>{" "}

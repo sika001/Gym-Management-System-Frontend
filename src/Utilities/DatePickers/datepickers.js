@@ -6,7 +6,7 @@ import { DateTimePicker } from "@mui/x-date-pickers";
 
 export function BasicDatePicker(props) {
     return (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <LocalizationProvider dateAdapter={AdapterDayjs}> 
             <DatePicker
                 onChange={props.handleDateChange}
                 sx={props.sx}
@@ -30,11 +30,11 @@ export default function DateTimePickerComponent(props) {
                 className={props.className}
                 onChange={props.handleDateTimeChange}
                 format="DD-MM-YYYY HH:mm"
-                value={props.value}
                 label={props.label}
+                defaultValue={props.defaultValue}
                 disableFuture={props.disableFuture}
                 disablePast={props.disablePast}
-                defaultValue={props.defaultValue}
+                sx={props.sx}
             />
         </LocalizationProvider>
     );

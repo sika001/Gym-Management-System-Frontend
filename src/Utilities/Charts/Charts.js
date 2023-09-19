@@ -2,19 +2,19 @@ import React from "react";
 import { Bar } from "react-chartjs-2";
 import { useState } from "react";
 import { Line } from "react-chartjs-2";
-import Chart from "chart.js/auto"; //DO NOT REMOVE THIS, IT WILL BREAK THE CHART
+import Chart from "chart.js/auto"; //NE DIRAJ OVO, PUCA GRAFIK AKO SE OVO MAKNE
 
 export function BarChart(props) {
     const [options] = useState({
         responsive: true,
         maintainAspectRatio: false,
-        barPercentage: props.barPercentage, //bar width
+        barPercentage: props.barPercentage, //širina barova
         scales: {
             x: {
                 title: {
                     display: true,
-                    text: props.labelX, // X-axis label
-                    color: props.color, // X-axis label color
+                    text: props.labelX, // X-osa labela
+                    color: props.color, // X-osa boja labele
                     font: {
                         size: props.font.size,
                     },
@@ -23,8 +23,8 @@ export function BarChart(props) {
             y: {
                 title: {
                     display: true,
-                    text: props.labelY, // Y-axis label
-                    color: props.color, // Y-axis label color
+                    text: props.labelY, // Y-osa labela
+                    color: props.color, // Y-osa boja labele
                     font: {
                         size: props.font.size,
                     },

@@ -18,7 +18,8 @@ function Employee() {
     }
 
     const handleEditOpen = (value, editEmployee) => {
-        console.log("handleEditOpen", value);
+        //edit employee je zaposleni koji se edituje
+        console.log("handleEditOpen", value, "editEmployee", editEmployee);
         setIsEditOpen(value);
         setEditEmployee(editEmployee);
     }
@@ -29,7 +30,8 @@ function Employee() {
                 isRegisterOpen 
                 ?
                     <>
-                        <ButtonIcon label={"Nazad"} startIcon={<ArrowBackIosNewIcon />} 
+                        <ButtonIcon label={"Nazad"} 
+                                    startIcon={<ArrowBackIosNewIcon />} 
                                     handleClick={() => handleRegisterOpen(false)} />
                      {/* Kreiranje novog zaposlenog se radi preko Register komponente */}
                         <Register />  
@@ -42,9 +44,11 @@ function Employee() {
                             ?
                                 <> 
                                 {/* Otvara se komponenta za editovanje zaposlenog */}
-                                    <ButtonIcon label={"Nazad"} startIcon={<ArrowBackIosNewIcon />} 
-                                        handleClick={() => handleEditOpen(false)} />
-                                    <EditEmployee />
+                                    <ButtonIcon label={"Nazad"} 
+                                                startIcon={<ArrowBackIosNewIcon />} 
+                                                handleClick={() => handleEditOpen(false)} />
+                                    
+                                    <EditEmployee editEmployee={editEmployee} />
                                 </>
                             :
                             // Ako nije ni register, ni edit otvoren, prikazuje se tabela sa zaposlenima

@@ -120,13 +120,25 @@ function MembershipRegister(props) {
     }
 
     useEffect(() => {
+        
         const getAllCoachesData = axios
             .get(`${api_url}/employee/type/1`) //employee/type/1 - are coaches
-            .then((res) => setCoachesData(res.data))
+            .then((res) => {
+                    console.log("GET ALL COACHES WORKOUTS: ", res.data);
+                setCoachesData(res.data)})
             .catch((err) => console.log("GRESKA GET ALL COACHES", err));
     }, []);
 
     function handleMembership() {
+        //Da bi izbjeli da ima više datuma i memshipID-ova u registerFormData (zbog appenda)
+        //Tada, ako već postoji datum ili memshipID, obrišemo ga i dodamo novi
+        if(registerFormData.has("StartDate")){
+            registerFormData.delete("StartDate");
+        }
+        
+        if(registerFormData.has("FK_MembershipTypeID")){
+            registerFormData.delete("FK_MembershipTypeID");
+        }
         registerFormData.append("StartDate", moment(new Date()).format("YYYY-MM-DD HH:mm:ss"));
         registerFormData.append("FK_MembershipTypeID", membershipType.ID);
 
@@ -147,11 +159,14 @@ function MembershipRegister(props) {
                 .then((res) => {
                     //if successful, add Client ID to membership object,
                     console.log("Client added SUCCESSFULLY", res.data);
-
-                    setFK_ClientID(res.data.rolePerson.FK_ClientID); //this will be used to add FK_ClientID to membership object
+                    showSnackbarMessage("success", "Uspješna registracija!")();
+                    setFK_ClientID(res.data.FK_ClientID); //this will be used to add FK_ClientID to membership object
                     setSuccessClient(true);
                 })
-                .catch((err) => showSnackbarMessage("error", "Error while trying to register")());
+                .catch((err) => {
+                    console.log("ERROR while trying to register", err);
+                    showSnackbarMessage("error", "Greška prilikom registracije!")()
+                });
 
             setIsSubmitted(false); //reset state
     }, [isSubmitted]);
@@ -173,6 +188,7 @@ function MembershipRegister(props) {
 
         const membership = convertFormDataToJSON(registerFormData);
         //if successful, add Client ID to membership object,
+
         const membershipRes = axios
             .post(`${api_url}/membership`, {
                 FK_ClientID: FK_ClientID, //this state is from registering a client (useEffect above)
@@ -181,32 +197,34 @@ function MembershipRegister(props) {
             })
             .then((res) => {
                 console.log("Membership added", res.data);
-
+                
                 //make a transaction
-                axios
-                    .post(`${api_url}/transaction`, {
-                        Amount: checked
-                            ? membershipType.Price + coach.EmployeePrice
-                            : membershipType.Price,
-                        Date: currDateTime,
-                        FK_TransactionTypesID: 1, //1 - membership renewal
-                        FK_ClientID: FK_ClientID,
-                        FK_EmployeeID: null,
-                    })
-                    .then((res) => {
-                        showSnackbarMessage("success", "Successfully bought a membership!")();
-                        navigate("/login");
-                    })
-                    .catch((err) => {
-                        showSnackbarMessage("error", "Error while trying to buy a membership!")();
-                        console.log("Error while trying to buy a membership", err);
-                    });
+                axios.post(`${api_url}/transaction`, {
+                    Amount: checked
+                        ? membershipType.Price + coach.EmployeePrice
+                        : membershipType.Price,
+                    Date: currDateTime,
+                    FK_TransactionTypesID: 1, //1 - membership renewal
+                    FK_ClientID: FK_ClientID,
+                    FK_EmployeeID: null,
+                    Description: `${registerFormData.get("Name")} ${registerFormData.get("Surname")} - Uplata članarine, tip: ${membershipType.Name}`
+                })
+                .then((res) => {
+                    showSnackbarMessage("success", `Uspješno kupljena članarina!`)();
+                    navigate("/login");
+                })
+                .catch((err) => {
+                    showSnackbarMessage("error", "Greška prilikom kupovine članarine!")();
+                    console.log("Error while trying to buy a membership", err);
+                });
             })
-
             .catch((err) => {
+                showSnackbarMessage("error", "Greška prilikom uplate članarine!")();
                 console.log("ERROR while trying to register membership", err);
             });
-        //dont need to spread entire registerObject, only need membership details
+            
+            
+            
 
         setSuccessClient(false); //reset state
     }, [successClient]);
@@ -242,6 +260,12 @@ function MembershipRegister(props) {
             props.handleWorkout(selectedWorkout);
 
             if (!checked) {
+
+                if(registerFormData.has("FK_WorkoutID")){
+                    //da bi izbjegli duplanje FK_WorkoutID-a u registerFormData, obrišemo stari i postavimo novi
+                    registerFormData.delete("FK_WorkoutID");
+                }
+
                 registerFormData.append("FK_WorkoutID", selectedWorkout.ID);
                 console.log("REGISTER FORM DATA SA FK_WRKID REPLACE: ", ...registerFormData);
             }
@@ -262,9 +286,17 @@ function MembershipRegister(props) {
     const handleClient = () => {
         props.handleClient({ ...props.client });
 
-        if (!checked) registerFormData.append("FK_WorkoutID", workout.ID);
+        if (!checked) {
+            //if it is not a private coach, then we need to add FK_WorkoutID to registerFormData
+            if(registerFormData.has("FK_WorkoutID")){
+                //da bi izbjegli duplanje FK_WorkoutID-a u registerFormData, obrišemo stari i postavimo novi
+                registerFormData.delete("FK_WorkoutID");
+            }
 
-        console.log("REGISTEr FORM DATA SA FK_WRKID: ", ...registerFormData);
+            registerFormData.append("FK_WorkoutID", workout.ID);
+
+        }
+        console.log("REGISTER FORM DATA SA FK_WRKID: ", ...registerFormData);
 
         setTrigger(true);
     };
@@ -319,14 +351,16 @@ function MembershipRegister(props) {
                         return null;
                     })}
                 </Select>
-                <FormHelperText>Choose a Workout Program</FormHelperText>
+                <FormHelperText>Odaberi trening</FormHelperText>
                 {workout.Type === "Individual Workout" && (
                     <ColorCheckbox //renders only if workout is individual
                         handleCheckbox={handleCheckbox}
-                        labelMessage="Get a specialized coach!"
+                        labelMessage="Unajmi personalnog trenera!"
                     />
                 )}
             </FormControl>
+
+            {/* Ako korisnik odabere indiviaulni trener i zatraži personalnog trenera ovo renderuj */}
             {checked && workout.Type === "Individual Workout" && (
                 <FormControl sx={{ m: 1, minWidth: 120 }}>
                     <Select
@@ -336,7 +370,7 @@ function MembershipRegister(props) {
                         onBlur={handleBlurCoach}
                         error={coach.length === 0 && isBluredCoach}
                     >
-                        {/* Renders an array of coaches */}
+                        {/* Renderuje samo trenere koji vode individualne treninge*/}
                         {coaches.map((coachEl) =>
                             coachEl["Workout Name"] === "Individual Workout" ? (
                                 <MenuItem value={coachEl} key={uuidv4()}>

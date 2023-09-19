@@ -8,6 +8,7 @@ function ButtonIcon(props) {
             onClick={props.handleClick}
             disabled={props.disabled}
             startIcon={props.startIcon}
+            sx={props.sx}
         >
             {props.label}
         </Button>

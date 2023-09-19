@@ -1,7 +1,6 @@
 import axios from "axios";
-require("dotenv").config(); //čita .env fajl
 
-const api_url = process.env.API_URL;
+const api_url = process.env.REACT_APP_API_URL;
 const jwtInterceptor = axios.create({});
 
 jwtInterceptor.interceptors.response.use(

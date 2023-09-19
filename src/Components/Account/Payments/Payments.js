@@ -1,15 +1,16 @@
 import { useContext, useEffect, useState } from "react";
-import "./Payments.css";
 import jwtInterceptor from "../../../Utilities/Interceptors/jwtInterceptor";
 import AuthContext from "../../Auth Context/AuthContext";
 import DataTable from "../../../Utilities/Data Table/Data-table";
 import moment from "moment";
 import { LineChart } from "../../../Utilities/Charts/Charts";
-import dotenv from 'dotenv';
-dotenv.config();
+import { Box, Button, Typography } from "@mui/material";
+import { useTheme } from "@emotion/react";
 
 function Payments(props) {
     const { user } = useContext(AuthContext); //user is the logged in userSS
+
+    const theme = useTheme();
 
     const [payments, setPayments] = useState([]);
     const [revenueData, setRevenueData] = useState([]);
@@ -25,24 +26,21 @@ function Payments(props) {
     const [totalRevenue, setTotalRevenue] = useState(0);
     const [totalExpenses, setTotalExpenses] = useState(0);
 
+    const [allTransactions, setAllTransactions] = useState([]); //za renderovanje tabele kod zaposlenih
+
     const api_url = process.env.REACT_APP_API_URL;
 
-    const findMembership = (FK_ClientID, startDate) => {
-        //returns membership details
-        //NAPRAVITI OVO DA SE DATUMI PODUDARAJU SA MEMBERSHIPOM IZ BAZE I OVIM STO SE GENERISE PRILIKOM KREIRANJA TRANSAKCIJE
-        const membershipData = props.memberships.find((mem) => {
-            return mem.FK_ClientID === FK_ClientID && mem["StartDate"] === startDate;
-        });
-        return membershipData;
-    };
 
-    const rows = payments.map((transaction, index) => {
+    const renderingArr = user.isClient === 1 ? payments : allTransactions; //ako je korisnik ulogovan, onda samo vidi njegove transakcije, ako je zaposleni, onda vidi sve transakcije
+    const rows = renderingArr.map((transaction, index) => {
+        //koristi se za renderovanje tabele transakcija
         console.log("transaction", transaction);
         return {
             id: index + 1, //need to have 'id'
-            Date: moment(transaction.Date).format("DD-MM-YYYY HH:mm:ss"),
+            Date: moment(transaction.Date).format("DD-MMM-YYYY HH:mm:ss") + 'h',
             Amount: transaction.Amount + "€",
             Type: transaction.Type,
+            Description: transaction.Description,
             // Description: ``
             //PRONAĆI U props.memberships,
         };
@@ -50,37 +48,28 @@ function Payments(props) {
 
     const cols = [
         { field: "id", headerName: "No.", width: 100 },
+        { field: "Amount", headerName: "Amount", width: 120 },
         { field: "Date", headerName: "Date and Time", width: 200 },
-        { field: "Amount", headerName: "Amount", width: 200 },
         { field: "Type", headerName: "Type", width: 200 },
-        { field: "Description", headerName: "Description", width: 200 },
+        { field: "Description", headerName: "Description", width: 450 },
     ];
 
     useEffect(() => {
         //fetch payments from the server
-        console.log("Fetching all the transactions...", user.ID);
+        console.log("Fetching the clients' transactions...", user.ID);
         //OVO PROMIJENITI DA DOVLAČI IZ COOKIEA, (AKO JE EMPLYOEE ILI CLIENT)
         //DODATI USLOV AKO JE EMPLOYEE, onda gađi employee/transaction, ako je client onda client/transaction
 
-        const clientEmployee = user.FK_ClientID ? "client" : "employee"; //if user has FK_ClientID, then he is a client, otherwise he is an employee
+        // const clientEmployee = user.isClient === 1 ? "client" : "employee"; //if user has FK_ClientID, then he is a client, otherwise he is an employee
         jwtInterceptor
-            .get(`${api_url}/transaction/${clientEmployee}/${user.ID}`, {
-                withCredentials: true,
-            })
-            // .get(`${api_url}/transaction/employee/${user.ID}`, {
-            //     withCredentials: true,
-            // })
+            .get(`${api_url}/transaction/client/${user.ID}`, {withCredentials: true})
             .then((res) => {
                 setPayments(res.data);
-                console.log("Successfully fetched all the transactions!", res.data);
-                console.log("FIND MEM DATA", findMembership(1178, "2023-07-27 18:21:31.0000000"));
-                console.log(
-                    "ISTO?",
-                    moment("27-07-2023 18:21:38").isSame("2023-07-27T18:21:38.000Z")
-                );
+                console.log("Successfully fetched clients' transactions!", res.data);
+               
             })
             .catch((err) => {
-                console.log("Error while trying to get all the transactions!", err);
+                console.log("Error while trying to get clients' transactions!", err);
             });
     }, [props.isAgree]); //isAgree is a state is activated when the user renews his membership
 
@@ -109,29 +98,30 @@ function Payments(props) {
             });
     }, []);
 
-    //line chart data for X axis
-    const months = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ];
+    useEffect(() => {
+        // dovlači se sve transakcije, (i prihodi i rashodi) za renderovanje tabele kod zaposlenih
+        if(user.isClient === 1) return; //ako je klijent, ne treba da dovlači sve transakcije 
+
+        jwtInterceptor.get(`${api_url}/transaction/all`, { withCredentials: true })
+            .then((res) => {
+                console.log("Successfully fetched all transactions!", res.data);
+                setAllTransactions(res.data);   
+            })
+            .catch((err) => {
+                console.log("Error while fetching all transactions!", err);
+            });
+    }, []);
+
+    //podaci za X osu grafika prihoda i rashoda
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December",];
 
     useEffect(() => {
-        fillRenderingRevenueData(); //fills the rendering data with 0 if there is no data for that month, or with the revenue if it exists
-        fillRenderingExpensesData(); //fills the rendering data with 0 if there is no data for that month, or with the expense if it exists
+        fillRenderingRevenueData(); //popunjava rendering data sa 0 ako nema podataka za taj mjesec, ili sa prihodom, ako postoji
+        fillRenderingExpensesData(); //popunjava rendering data sa 0 ako nema podataka za taj mjesec, ili sa rashodom, ako postoji
     }, [revenueData]);
 
     function fillRenderingRevenueData() {
-        //this data will be displayed on Y axis
+        //ovo se koristi za prikaz na Y osi
         setTotalRevenue(0); //resets the total revenue because of the useEffect re-rendering
 
         let tempRevArr = [...renderingRevenueData];
@@ -160,7 +150,7 @@ function Payments(props) {
         labels: months, //X axis, rendering months array
         datasets: [
             {
-                label: "Monthly Revenue",
+                label: "Mjesečni prihodi (€)",
                 data: renderingRevenueData, //Y axis, rendering
 
                 fill: {
@@ -172,7 +162,7 @@ function Payments(props) {
                 tension: 0.15, //line curve (0 is straight line)
             },
             {
-                label: "Monthly Expenses",
+                label: "Mjesečni rashodi (€)",
                 data: renderingExpensesData, //Y axis, rendering
 
                 fill: {
@@ -195,40 +185,53 @@ function Payments(props) {
     };
 
     return (
-        <div className="payments-container">
-            <div className="payments-title">
-                <h2>Payments</h2>
-            </div>
+        <>
+        {(user.isAdmin === 1 || user.isEmployee) && (
+            <Box sx={{border: '1px solid black', mt: 5}}>
+                {/* Grafik za plaćanja se renderuje jedino za zaposlene i admina */}
+                    <>
+                        <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                            <Typography sx={{...theme.title, mt: 4, mb: 4}}>
+                                Plaćanja
+                            </Typography>
 
-            <div className="line-chart">
-                <h2>Dodati da se bira godina (po defaultu ide trenutna)</h2>
-                <LineChart data={LineChartData} options={LineChartOptions} />
-            </div>
+                            <Typography sx={{fontSize: 18, color: theme.palette.primaryGreen.main }}>
+                                Ovogodišnji prihodi i rashodi
+                            </Typography>
 
-            <div className="money-statistics">
-                <div className="money-statistics-revenue">
-                    <h3>Total Yearly Revenue</h3>
-                    <h4>{totalRevenue}€</h4>
-                </div>
-                <div className="money-statistics-expenses">
-                    <h3>Total Yearly Expenses</h3>
-                    <h4>{totalExpenses}€</h4>
-                </div>
-            </div>
+                            <Box sx={{width: '60vw', height: '60vh', ml: 10}}>
+                                <LineChart data={LineChartData} options={LineChartOptions} />
+                            </Box>
+                        </Box>
 
-            {payments && (
-                <div className="payments-content">
-                    <div className="transaction">
-                        <DataTable rows={rows} columns={cols} />
-                    </div>
-                </div>
+                    
+                        <Box className="money-statistics">
+                            <Box className="money-statistics-revenue">
+                                <h3>Ukupni godišnji prihodi</h3>
+                                <h4>{totalRevenue}€</h4>
+                            </Box>
+                            <Box className="money-statistics-expenses">
+                                <h3>Ukupni godišnji rashodi</h3>
+                                <h4>{totalExpenses}€</h4>
+                            </Box>
+                        </Box>
+                    </>
+            </Box>
+        )}
+
+            {/* Transakcije */}
+            {(payments || allTransactions) && (
+                <Box sx={{mt:4}}>
+                    <Typography sx={{...theme.title, mb: 4}}>Transakcije</Typography>
+                   
+                    <Box>
+                        <Box className="transaction">
+                            <DataTable rows={rows} columns={cols} />
+                        </Box>
+                    </Box>     
+                </Box>
             )}
-            
-            <h4>
-                Dodati grafik za prihode i rashode i popraviti podatke u cijeloj bazi, jer su u
-                disbalansu
-            </h4>
-        </div>
+        </>
     );
 }
 

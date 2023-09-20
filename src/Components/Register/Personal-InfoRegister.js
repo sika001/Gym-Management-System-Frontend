@@ -14,7 +14,7 @@ import FormHelperText from "@mui/material/FormHelperText";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import moment from "moment";
-import { Input, InputAdornment, InputLabel } from "@mui/material";
+import { Box, Input, InputAdornment, InputLabel } from "@mui/material";
 import AuthContext from "../Auth Context/AuthContext";
 import Loader from "../../Utilities/Loader/Loader";
 
@@ -242,132 +242,125 @@ function PersonalInfoRegister(props) {
 
     return (
         <>
-            <div className="name">
+            <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, mr: '7%'}}>
                 <TextField
                     className="formclass"
                     name="nameForm"
-                    label="Name"
+                    label="Ime"
                     onChange={handleNameChange}
                     onBlur={handleBlur}
                     value={name}
-                    error={!isValidName && isBlured} //input form becomes red if name is invalid or field out of focus
+                    error={!isValidName && isBlured}
                 />
-            </div>
-            <div className="surname">
                 <TextField
                     className="formclass"
                     name="surnameForm"
-                    label="Surname"
+                    label="Prezime"
                     onChange={handleSurnameChange}
                     onBlur={handleBlur}
                     value={surname}
                     error={!isValidSurname && isBlured}
                 />
-            </div>
-            <div className="date">
                 <BasicDatePicker
                     name="dateForm"
                     value={date}
                     handleDateChange={handleDateChange}
                     className={"formclass"}
-                    label={"Date of birth"}
+                    label={"Datum rođenja"}
                     disableFuture={true}
                     disablePast={false}
                 />
-            </div>
-            <div className="phone">
                 <TextField
                     className="formclass"
                     name="phoneForm"
-                    label="Phone number"
+                    label="Broj telefona"
                     onChange={handlePhoneChange}
                     onBlur={handleBlur}
                     value={phone}
                     error={!isValidPhone && isBlured}
                 />
-            </div>
-            <div className="address">
+            
                 <TextField
                     className="formclass"
                     name="addressForm"
-                    label="Address"
+                    label="Adresa"
                     onChange={handleAddressChange}
                     onBlur={handleBlur}
                     value={address}
                     error={!isValidAddress && isBlured}
                 />
-            </div>
-            <FormControl sx={{ m: 1, minWidth: 120 }}>
-                <Select
-                    value={country ? country : ""}
-                    onChange={handleCountryChange}
-                    displayEmpty
-                    key={country.ID}
-                    error={country.length === 0 && isBluredCountry}
-                    onBlur={handleBlurCountry}
-                >
-                    {countryData.map((countryEl) => (
-                        <MenuItem value={countryEl} key={uuidv4()}>
-                            {countryEl.Name}
-                        </MenuItem>
-                    ))}
-                </Select>
-                <FormHelperText>Choose a Country</FormHelperText>
-            </FormControl>
-            {country && (
-                <FormControl sx={{ m: 1, minWidth: 120 }}>
-                    <Select
-                        value={city ? city : ""}
-                        onChange={handleCityChange}
-                        displayEmpty
-                        key={city.ID}
-                        error={city.length === 0 && isBluredCity}
-                        onBlur={handleBlurCity}
-                    >
-                        {cityData.map((cityEl) => (
-                            <MenuItem value={cityEl} key={uuidv4()}>
-                                {cityEl.Name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    <FormHelperText>Choose a City</FormHelperText>
-                </FormControl>
-            )}
-            {city && (
-                <FormControl sx={{ m: 1, minWidth: 120 }}>
-                    <Select
-                        value={gym ? gym : ""}
-                        onChange={handleGymChange}
-                        displayEmpty
-                        key={gym.ID}
-                        error={gym.length === 0 && isBluredGym}
-                        onBlur={handleBlurGym}
-                    >
-                        {gymsData.map((gymEl) => (
-                            <MenuItem value={gymEl} key={uuidv4()}>
-                                {gymEl.Name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    <FormHelperText>Choose a Gym</FormHelperText>
-                </FormControl>
-            )}
-            {/* DON'T TOUCH name: Picture (need to be the same as the one on the backend in muler-config.js)*/}
-            <div className="file-upload" style={{ display: "flex", justifyContent: "center" }}>
-                <input
-                    type="file"
-                    id="fileInput"
-                    name="Picture"
-                    onChange={handleFileChange}
-                    style={{ display: "none" }}
-                />
+                <Box>
+                    <FormControl sx={{ m: 1, minWidth: 120 }}>
+                        <Select
+                            value={country ? country : ""}
+                            onChange={handleCountryChange}
+                            displayEmpty
+                            key={country.ID}
+                            error={country.length === 0 && isBluredCountry}
+                            onBlur={handleBlurCountry}
+                        >
+                            {countryData.map((countryEl) => (
+                                <MenuItem value={countryEl} key={uuidv4()}>
+                                    {countryEl.Name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        <FormHelperText>Odaberite državu</FormHelperText>
+                    </FormControl>
 
-                {/* Button to trigger file input */}
-                <Button variant="contained" onClick={handleFileButtonClick}>
-                    Upload a Photo
-                </Button>
-                <p>{file ? file.name : "No photo selected!"}</p>
-            </div>
+                    {country && (
+                        <FormControl sx={{ m: 1, minWidth: 120 }}>
+                            <Select
+                                value={city ? city : ""}
+                                onChange={handleCityChange}
+                                displayEmpty
+                                key={city.ID}
+                                error={city.length === 0 && isBluredCity}
+                                onBlur={handleBlurCity}
+                                >
+                                {cityData.map((cityEl) => (
+                                    <MenuItem value={cityEl} key={uuidv4()}>
+                                        {cityEl.Name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            <FormHelperText>Odaberite grad</FormHelperText>
+                        </FormControl>
+                    )}
+                    {city && (
+                        <FormControl sx={{ m: 1, minWidth: 120 }}>
+                            <Select
+                                value={gym ? gym : ""}
+                                onChange={handleGymChange}
+                                displayEmpty
+                                key={gym.ID}
+                                error={gym.length === 0 && isBluredGym}
+                                onBlur={handleBlurGym}
+                                >
+                                {gymsData.map((gymEl) => (
+                                    <MenuItem value={gymEl} key={uuidv4()}>
+                                        {gymEl.Name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                            <FormHelperText>Odaberite teretanu</FormHelperText>
+                        </FormControl>
+                    )}
+            </Box>
+            {/* NE DIRAJ name: Picture (mora da bude ista kao na backendu muler-config.js)*/}
+            <input
+                type="file"
+                id="fileInput"
+                name="Picture"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+            />
+
+            {/* Button to trigger file input */}
+            <Button variant="contained" onClick={handleFileButtonClick}>
+                Odaberi sliku
+            </Button>
+            <p>{file ? file.name : "Nema selektovanih slika!"}</p>
 
             {/* Pošto koriste iste komponente, ovaj dio o zaradama se prikazuje samo za Admina*/}
             {props.isAdmin && (
@@ -379,11 +372,11 @@ function PersonalInfoRegister(props) {
                             endAdornment={<InputAdornment position="end">€</InputAdornment>} //€ na pocetku polja
                             value={salary}
                             onChange={handleSalaryChange}
-                        />
+                            />
                     </FormControl>
 
                     <FormControl sx={{ m: 1, minWidth: 120 }} variant="standard">
-                        <InputLabel htmlFor="employee-type">Employee Type</InputLabel>
+                        <InputLabel htmlFor="employee-type">Tip zaposlenog</InputLabel>
                         <Select
                             value={selectedEmployeeType || ""}
                             onChange={handleEmployeeTypeChange}
@@ -406,7 +399,6 @@ function PersonalInfoRegister(props) {
                 </>
             )}
 
-            <div className="submit">
                 <Button
                     className="submit-btn"
                     variant="outlined"
@@ -429,8 +421,8 @@ function PersonalInfoRegister(props) {
                 >
                     Dalje
                 </Button>
-            </div>
-        </>
+        </Box>
+    </>
     );
 }
 

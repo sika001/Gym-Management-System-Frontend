@@ -1,4 +1,3 @@
-import Home from "./Components/Home/Home";
 import Login from "./Components/Login/Login";
 import EditPersonalInfo from "./Components/EditPersonal_Info/EditPersonalInfo";
 import Members from "./Components/Members/Members";
@@ -11,7 +10,6 @@ import ProtectedRoute from "./Utilities/Protected Routes/ProtectedRoutes";
 import Dashboard from "./Components/Dashboard/Dashboard";
 import Schedule from "./Components/Schedule/Schedule";
 import Employee from "./Components/Employee/Employee";
-import Logout from "./Components/Login/Logout";
 
 const router = createBrowserRouter([
     {
@@ -20,8 +18,16 @@ const router = createBrowserRouter([
             {
                 path: "/",
                 element: (
+                    <ProtectedRoute accessBy="non-authenticated">
+                        <Login />{" "}
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "/",
+                element: (
                     <ProtectedRoute accessBy="authenticated">
-                        <Home />{" "}
+                        <Dashboard />{" "}
                     </ProtectedRoute>
                 ),
             },

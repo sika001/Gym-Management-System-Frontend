@@ -56,7 +56,6 @@ function Schedule() {
 
     return (
         <div className="schedule-container">
-            <h1>Schedule</h1>
             <div className="schedule-content">
                 {isLoading ? (
                     <Loader />

@@ -1,14 +1,22 @@
-import { useContext } from "react";
-import ButtonIcon from "../../Utilities/Button/Button";
-import liftIcon from "../../images/lift.png";
+import { useContext,  } from "react";
 import AuthContext from "../Auth Context/AuthContext";
+import logoutIcon1 from "../../images/SideBar/logout.png"
+import logoutIcon2 from "../../images/SideBar/logout (1).png"
+import "../Side Bar/side-bar.css"
 
-function Logout() {
+function Logout(props) {
     const { logout } = useContext(AuthContext);
 
     return (
         <>
-            <ButtonIcon label="Logout" icon={<img src={liftIcon} />} handleClick={logout} />
+            <div onClick={logout}>
+                <img src={props.isHoveredLogout ? logoutIcon1 : logoutIcon2 }
+                    alt="logout-icon"
+                    style={{width: '30px', height: '30px'}}
+                />
+                <div>Izloguj se</div>    
+            </div>  
+            
         </>
     );
 }

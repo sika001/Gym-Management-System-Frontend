@@ -10,6 +10,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import { useSnackbar } from "notistack";
+import { Box, Typography } from "@mui/material";
 
 function MembershipRegister(props) {
     const [workoutData, setWorkoutData] = useState([]); //workout programs are array of objects
@@ -304,7 +305,7 @@ function MembershipRegister(props) {
     let coachRendered = [];
 
     return (
-        <>
+        <Box sx={{display: 'flex', flexDirection: 'column', ml: '30%', mr: '30%'}}>
             <FormControl sx={{ m: 1, minWidth: 120 }}>
                 <Select
                     value={workout || ""}
@@ -374,9 +375,9 @@ function MembershipRegister(props) {
                         {coaches.map((coachEl) =>
                             coachEl["Workout Name"] === "Individual Workout" ? (
                                 <MenuItem value={coachEl} key={uuidv4()}>
-                                    <div key={uuidv4()}>
+                                    <Box key={uuidv4()}>
                                         {coachEl.Name} {coachEl.Surname} - {coachEl.EmployeePrice}€
-                                    </div>
+                                    </Box>
                                 </MenuItem>
                             ) : null
                         )}
@@ -402,33 +403,33 @@ function MembershipRegister(props) {
                 <FormHelperText>Odaberi članarinu!</FormHelperText>
             </FormControl>
 
-            <div className="total">
+            <Box className="total">
                 <hr />
-                <h2>
+                <Typography sx={{fontSize: 18, fontWeight: 'bold'}}>
                     Ukupna cijena:{" "}
                     {checked ? membershipType.Price + coach.EmployeePrice : membershipType.Price}€
-                </h2>
-            </div>
+                </Typography>
+            </Box>
 
-            <div className="submit">
-                <Button
-                    className="submit-btn"
-                    variant="outlined"
-                    size="large" //-2 because steps starts at 0, and on the last step should be submit
-                    onClick={handleSubmit}
-                    type="submit" //needed for file upload to work
-                    disabled={
-                        checked
-                            ? workout.length === 0 ||
-                              coach.length === 0 ||
-                              membershipType.length === 0
-                            : workout.length === 0 || membershipType.length === 0
-                    }
-                >
-                    Napravi nalog
-                </Button>
-            </div>
-        </>
+            <Button
+                className="submit-btn"
+                variant="outlined"
+                size="large" //-2 because steps starts at 0, and on the last step should be submit
+                onClick={handleSubmit}
+                type="submit" //needed for file upload to work
+                sx={{m: 'auto', width: 200, mt: 3}}
+                disabled={
+                    checked
+                        ? workout.length === 0 ||
+                            coach.length === 0 ||
+                            membershipType.length === 0
+                        : workout.length === 0 || membershipType.length === 0
+                }
+            >
+                Napravi nalog
+            </Button>
+
+        </Box>
     );
 }
 

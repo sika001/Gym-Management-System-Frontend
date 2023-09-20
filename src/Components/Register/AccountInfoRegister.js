@@ -5,12 +5,13 @@ import Button from "@mui/material/Button";
 import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
 import { useSnackbar } from "notistack";
 import AuthContext from "../Auth Context/AuthContext";
+import { Box } from "@mui/material";
 
 
 function AccountInfoRegister(props) {
 
-    const {user} = useContext(AuthContext);
-    const [isAdmin] = useState(user && user.isAdmin ? true : false); //ako je admin kreira se zaposleni, inače klijent nastavlja na sljedeći korak
+    const { user } = useContext(AuthContext);
+    const [isAdmin] = useState(user && user.isAdmin === 1 ? true : false); //ako je admin kreira se zaposleni, inače klijent nastavlja na sljedeći korak
     
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -112,65 +113,57 @@ function AccountInfoRegister(props) {
     };
 
     return (
-        <>
+        <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2}}>
             {/* Renders only on props.step 2 */}
-            <div className="email">
-                <TextField
-                    className="formclass"
-                    name="emailForm"
-                    label="Email"
-                    onChange={handleEmailChange}
-                    onBlur={handleBlur}
-                    value={email}
-                    error={!isValidEmail && isBlured} //input form becomes red if mail is invalid or field out of focus
-                />
-            </div>
-            <div className="password">
-                <TextField
-                    className="formclass"
-                    name="passwordForm"
-                    label="Password"
-                    type="password"
-                    onChange={handlePasswordChange}
-                    onBlur={handleBlur}
-                    value={password}
-                    error={!isValidPassword && isBlured} //input form becomes red if password is invalid or field out of focus
-                />
-            </div>
-            <div className="password">
-                <TextField
-                    className="formclass"
-                    name="confirmPasswordForm"
-                    label="Confirm Password"
-                    type="password"
-                    onChange={handleConfirmPasswordChange}
-                    onBlur={handleBlur}
-                    value={confirmPassword}
-                    disabled={!isValidPassword || password.length === 0} //input form becomes red if password is invalid or field out of focus
-                    error={!isValidConfirmPassword && isBlured && !confirmPassword.length === 0} //input form becomes red if password is invalid or field out of focus
-                />
-            </div>
+            <TextField
+                className="formclass"
+                name="emailForm"
+                label="Email"
+                onChange={handleEmailChange}
+                onBlur={handleBlur}
+                value={email}
+                error={!isValidEmail && isBlured}
+            />
+            <TextField
+                className="formclass"
+                name="passwordForm"
+                label="Password"
+                type="password"
+                onChange={handlePasswordChange}
+                onBlur={handleBlur}
+                value={password}
+                error={!isValidPassword && isBlured} //input form becomes red if password is invalid or field out of focus
+            />
+            <TextField
+                className="formclass"
+                name="confirmPasswordForm"
+                label="Confirm Password"
+                type="password"
+                onChange={handleConfirmPasswordChange}
+                onBlur={handleBlur}
+                value={confirmPassword}
+                disabled={!isValidPassword || password.length === 0} //input form becomes red if password is invalid or field out of focus
+                error={!isValidConfirmPassword && isBlured && !confirmPassword.length === 0} //input form becomes red if password is invalid or field out of focus
+            />
 
-            <div className="submit">
-                <Button
-                    sx={{width: 200}}
-                    className="submit-btn"
-                    variant="outlined"
-                    size="large" //-2 because props.steps starts at 0, and on the last props.step should be submit
-                    onClick={handleClick} //increments props.step value
-                    disabled={
-                        email.length === 0 ||
-                        password.length === 0 ||
-                        confirmPassword.length === 0 ||
-                        !isValidPassword ||
-                        !isValidEmail ||
-                        !isValidConfirmPassword
-                    }
-                >
-                 {isAdmin ? "Dalje" : "Kreiraj zaposlenog!"}
-                </Button>
-            </div>
-        </>
+            <Button
+                sx={{width: 200}}
+                className="submit-btn"
+                variant="outlined"
+                size="large" //-2 because props.steps starts at 0, and on the last props.step should be submit
+                onClick={handleClick} //increments props.step value
+                disabled={
+                    email.length === 0 ||
+                    password.length === 0 ||
+                    confirmPassword.length === 0 ||
+                    !isValidPassword ||
+                    !isValidEmail ||
+                    !isValidConfirmPassword
+                }
+            >
+                {!isAdmin ? "Dalje" : "Kreiraj zaposlenog!"}
+            </Button>
+        </Box>
     );
 }
 

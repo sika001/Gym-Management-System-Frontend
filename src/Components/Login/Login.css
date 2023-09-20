@@ -6,7 +6,7 @@
     width: 80%; /* Updated width to 80% */
     padding: 6%;
     border: 1px solid rgba(159, 158, 158, 0.374);
-    box-sizing: border-box; /* Added box-sizing to include padding and border in width calculation */
+    box-sizing: border-box; /*Added box-sizing to include padding and border in width calculation*/
 }
 
 .login-container > div {
@@ -14,13 +14,14 @@
 }
 
 .formclass {
-    width: 100%; /* Updated width to 100% */
-    max-width: 300px; /* Added max-width for responsiveness */
+    width: 100%; 
+    max-width: 400px; 
     margin: 0 auto; /* Center the form horizontally */
 }
 .submit {
     padding: 5%;
 }
+
 .submit-btn {
     height: 40px;
     width: 20%;
@@ -37,6 +38,7 @@
 .register-text h4 {
     display: inline-block;
     text-decoration: underline;
+    color: '#007867'
 }
 
 .register-text h4:hover {

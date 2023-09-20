@@ -1,19 +1,22 @@
 import Stepper from "../../Utilities/Stepper/Stepper";
 import { useContext, useState } from "react";
-import { Link } from "react-router-dom";
 import React from "react";
 import PersonalInfoRegister from "./Personal-InfoRegister";
 import AccountInfoRegister from "./AccountInfoRegister";
 import MembershipRegister from "./MembershipRegister";
-import "./Register.css";
+// import "./Register.css";
 import AuthContext from "../Auth Context/AuthContext";
+import { Box, Typography } from "@mui/material";
+import { useTheme } from "@emotion/react";
 
 function Register(props) {
-    //same register component for both client and employee
+    //ista komponenta se koristi za registraciju klijenta i zaposlenog
 
     const { user } = useContext(AuthContext); //ulogovani korisnik
 
     const [step, setStep] = useState(0);
+
+    const theme = useTheme();
 
     const handleStepValue = () => {
         if (step + 1 <= steps.length) setStep(step + 1);
@@ -74,63 +77,59 @@ function Register(props) {
     };
 
     return (
-        <>
-            <h1>Register component</h1>
+        <Box sx={{width: '80%', m: 'auto'}}>
+            <Typography  sx={{ ...theme.title, mt:2, mb: 2, textDecoration: 'underline' }}> 
+                Registracija 
+            </Typography>
             <Stepper activeStep={step} steps={steps} />
-            {/* <form className="login-container"> */}
-            <div className="greeting">
-                <h1>
-                    Enter {step === 0 ? "personal" : step === 1 ? "account" : "membership"}{" "}
-                    information!
-                </h1>
-            </div>
 
-            {step === 0 && (
-                <PersonalInfoRegister
-                    handleStepValue={handleStepValue}
-                    handleClient={handleClient}
-                    handleEmployee={handleEmployee}
-                    handleGym={handleGym}
-                    isAdmin={user && user.isAdmin ? true : false} //ako je ulogovan i ako je admin
-                />
-            )}
+            {/* <Box className="greeting">
+                <Typography sx={{fontSize: 17, fontWeight: 'bold'}}>
+                    Unesite {step === 0 ? "lične podatke!" : step === 1 ? "podatke o profilu!" : "podatke o članarini!"}{" "}
+                </Typography>
+            </Box> */}
 
-            {step === 1 && (
-                <AccountInfoRegister 
-                    handleStepValue={handleStepValue} 
-                    handleRole={handleRole} 
-                    employee={employee}
-                 />
-            )}
-            
-            {/* Prikazuje se samo ako korisnik nije ulogovan, tj. samo ako klijent pokušava da kreira nalog */}
-            {step === 2 && !user &&
-                <MembershipRegister
-                    step={step}
-                    handleStepValue={handleStepValue}
-                    role={role}
-                    client={client}
-                    workout={workout}
-                    membership={membership}
-                    personalCoach={personalCoach}
-                    handleRole={handleRole}
-                    handleClient={handleClient}
-                    handleWorkout={handleWorkout}
-                    handleMembership={handleMembership}
-                    handlePersonalCoach={handlePersonalCoach}
-                    gym={gym}
-                    isAdmin={user && user.isAdmin ? true : false} //moram dodati uslov da je user ulogovan
-                />
-            }
+            <Box sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center', mt: 4}}>
+                {step === 0 && (
+                    <PersonalInfoRegister
+                        handleStepValue={handleStepValue}
+                        handleClient={handleClient}
+                        handleEmployee={handleEmployee}
+                        handleGym={handleGym}
+                        isAdmin={user && user.isAdmin ? true : false} //ako je ulogovan i ako je admin
+                    />
+                )}
+
+                {step === 1 && (
+                    <AccountInfoRegister 
+                        handleStepValue={handleStepValue} 
+                        handleRole={handleRole} 
+                        employee={employee}
+                    />
+                )}
                 
-            {/* Ako nije ulogovan */}
-            {!user && 
-             <Link to={"/register"}>
-                <div className="register-text">
-                    <h4>Don't have an account? Register here</h4>
-                </div>
-            </Link>}
-        </>
+                {/* Prikazuje se samo ako korisnik nije ulogovan, tj. samo ako klijent pokušava da kreira nalog */}
+                {step === 2 && !user &&
+                    <MembershipRegister
+                        step={step}
+                        handleStepValue={handleStepValue}
+                        role={role}
+                        client={client}
+                        workout={workout}
+                        membership={membership}
+                        personalCoach={personalCoach}
+                        handleRole={handleRole}
+                        handleClient={handleClient}
+                        handleWorkout={handleWorkout}
+                        handleMembership={handleMembership}
+                        handlePersonalCoach={handlePersonalCoach}
+                        gym={gym}
+                        isAdmin={user && user.isAdmin ? true : false} //moram dodati uslov da je user ulogovan
+                    />
+                }
+                    
+            </Box>
+        </Box>
     );
 }
 

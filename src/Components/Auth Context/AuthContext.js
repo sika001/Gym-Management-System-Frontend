@@ -42,7 +42,7 @@ export function AuthContextProvider({ children }) {
             })
             .then((response) => {
                 console.log("Success!", response.data);
-                showSnackbarMessage("success", "Logged in successfully!")(); //show snackbar message
+                showSnackbarMessage("success", "Uspješno ste se ulogovali!")(); //show snackbar message
                 // save user data to local storage (so that we can access it even after page refresh)
                 localStorage.setItem("userProfile", JSON.stringify(response.data.results));
                 setUser(response.data.results);
@@ -50,8 +50,8 @@ export function AuthContextProvider({ children }) {
                 navigate("/");
             })
             .catch((err) => {
-                showSnackbarMessage("error", "Wrong email or password!")(); //show snackbar message
-                console.log("Wrong email or password ddd!", err);
+                showSnackbarMessage("error", "Pogrešan mail ili šifra!")(); //show snackbar message
+                console.log("Wrong email or password!", err);
             })
             .finally(() => {
                 setIsLoading(false);
@@ -63,13 +63,13 @@ export function AuthContextProvider({ children }) {
             .get(`${api_url}/logout`, { withCredentials: true })
             .then((response) => {
                 console.log("Logged out successfully!", response);
-                showSnackbarMessage("warning", "Logged out successfully!")(); //show snackbar message
+                showSnackbarMessage("warning", "Uspješno ste se izlogovali!")(); //show snackbar message
                 localStorage.removeItem("userProfile");
                 setUser(null);
                 navigate("/login");
             })
             .catch((err) => {
-                showSnackbarMessage("error", "Error while trying to log out!")(); //show snackbar message
+                showSnackbarMessage("error", "Greška prilikom odjavljivanja!")(); //show snackbar message
                 console.log("Error while trying to log out!", err);
             });
     };

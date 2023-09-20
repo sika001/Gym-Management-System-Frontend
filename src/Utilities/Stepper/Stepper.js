@@ -9,10 +9,7 @@ function HorizontalStepperWithError(props) {
     const isStepFailed = (step) => {
         return false;
     };
-    // const handleClick = (event) => {
-    //     console.log("CLICKED", event.target);
-    // };
-    // const [hover, setHover] = React.useState(false);
+
     return (
         <Box sx={{ width: "100%" }}>
             <Stepper activeStep={props.activeStep}>

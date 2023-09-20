@@ -46,7 +46,7 @@ function Login() {
     return (
         <form className="login-container">
             <div className="greeting">
-                <h1>Please log in!</h1>
+                <h1>Prijavite se!</h1>
             </div>
             <div className="email">
                 <TextField
@@ -86,12 +86,12 @@ function Login() {
                     }
                     onClick={loginSubmit}
                 >
-                    Login
+                    Prijavi se
                 </Button>
             </div>
             <Link to={"/register"}>
                 <div className="register-text">
-                    <h4>Don't have an account? Register here</h4>
+                    <h4>Nemate profil? Registrujte se ovdje!</h4>
                 </div>
             </Link>
         </form>

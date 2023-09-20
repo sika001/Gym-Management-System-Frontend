@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -10,14 +10,16 @@ import { useEffect } from "react";
 import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
 import Loader from "../../Utilities/Loader/Loader";
 import ReadOnlyEventComponent from "./EventComponents/ReadOnlyEventComponent";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ButtonIcon from "../../Utilities/Button/Button";
 import AddEditEventComponent from "./EventComponents/AddEditEventComponent";
+import AuthContext from "../Auth Context/AuthContext";
 
 function ScheduleComponent(props) {
     const [data] = useState(props.employeeWorkouts); //contains info about personal coaches, their workouts and time schedules
 
+    const { user } = useContext(AuthContext)
     console.log("DATA", data);
 
     const [isLoading, setIsLoading] = useState(true);
@@ -402,7 +404,6 @@ function ScheduleComponent(props) {
                         ? chosenElement["Name"] + " " + chosenElement["Surname"]
                         : null,
                 ScheduleID: popoverScheduleID,
-                //OVO PROVJERITI
                 "Workout Name": chosenElement && chosenElement["Workout Name"] ? chosenElement["Workout Name"] : 'Custom Event',
                 "Workout Type": chosenElement && chosenElement["Workout Type"] ? chosenElement["Workout Type"] : 'Custom Event',
                 "FK_WorkoutID": chosenElement && chosenElement["FK_WorkoutID"] ? chosenElement["FK_WorkoutID"] : 14,
@@ -430,13 +431,11 @@ function ScheduleComponent(props) {
                 {
                     ...updatedEvent,
                     extendedProps: {
-                        //TREBA LI OVO MAKNUTI?
                         coach:
                             chosenElement && chosenElement["Name"] && chosenElement["Surname"]
                                 ? chosenElement["Name"] + " " + chosenElement["Surname"]
                                 : null,
                         ScheduleID: popoverScheduleID,
-                        //OVO PROVJERITI
                         "Workout Name": chosenElement && chosenElement["Workout Name"] ? chosenElement["Workout Name"] : 'Custom Event',
                         "Workout Type": chosenElement && chosenElement["Workout Type"] ? chosenElement["Workout Type"] : 'Custom Event',
                         "FK_WorkoutID": chosenElement && chosenElement["FK_WorkoutID"] ? chosenElement["FK_WorkoutID"] : 14,
@@ -656,16 +655,17 @@ function ScheduleComponent(props) {
                 initialView={"dayGridMonth"}
                 headerToolbar={{
                     //zaglavlje kalendara (case sensitive) NE DIRAJ IMENA JER MORAJU BITI OVAKVA
-                    start: "today prev,next addEventButton", //addEventButton je custom button
+                    start: "prev,today,next addEventButton", //addEventButton je custom button
                     center: "title",
                     end: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
                 customButtons={{
-                    addEventButton: {
+                    addEventButton: user.isEmployee===1 || user.isAdmin===1 ? 
+                    {
                         text: "Dodaj događaj",
                         click: handleNewEventCreate,
                         hint: "Kreiraj novi događaj!",
-                    },
+                    } : null
                 }}
                 eventChange={handleEventMouseEnter}
                 events={allEvents} //events that are displayed on the calendar
@@ -679,7 +679,7 @@ function ScheduleComponent(props) {
 
             {/* Displaying dialog (for creating and editing events) */}
             {popoverText && (
-                <div className="popover">
+                <Box className="popover">
                     {/* IMPORTANT NOTE: Dialog component throws warnings when "dialogText" contains 
                     something other that fragments (divs, components...), so just ignore it */}
                     <DialogComponent
@@ -696,7 +696,7 @@ function ScheduleComponent(props) {
                         isDialogOpened={isDialogOpened}
                         dialogTitle={
                             isCreatingNewEvent ? (
-                                <Box>Dodaj novi događaj</Box>
+                                <Typography>Dodaj novi događaj</Typography>
                             ) : (
                                 //Ime eventa (i ime trenera) koje se prikazuje u dialogu
                                 <Box
@@ -725,10 +725,8 @@ function ScheduleComponent(props) {
                             )
                         }
                         dialogText={
-                            isCreatingNewEvent || isEditingEvent ? (
-                                //Kreiranje novog događaja
-                                
-                                    // {/* Editing an event */} {/* ISTO KAO I KOD ADD EVENTA */}
+                            user.isClient === 0 && (isCreatingNewEvent || isEditingEvent) ? (
+                                // {/* Kreiranje ili editovanje događaja (u zavisnosti od isCreatingNewEvent)*/}
                                 <AddEditEventComponent
                                     popoverText={popoverText}
                                     popoverStartDate={popoverStartDate}
@@ -770,18 +768,9 @@ function ScheduleComponent(props) {
                         agree={isCreatingNewEvent ? "Dodaj" : isReadOnlyEvent ? "Izmijeni" : "Sačuvaj izmjene"}
                         handleAgree={isEditingEvent ? handleUpdateEvent : handleAgree}
                         showButton={false}
-                        disableAgreeBtn={
-                            //OVO NAPRAVITI DA RADI
-                            // isCreatingNewEvent
-                            //     ? !startEventDate.length ||
-                            //       !endEventDate.length ||
-                            //       newPopoverText.length <= 1 //<=1 bcs newPopverText can have 1 empty space (defined earlier)
-                            //     : false
-                            // || (isChecked && !chosenElement)
-                            false
-                        }
+                        disableAgreeBtn={user.isClient === 1}
                     />
-                </div>
+                </Box>
             )}
         </>
     );

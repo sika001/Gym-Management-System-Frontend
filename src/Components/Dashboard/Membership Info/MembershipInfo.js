@@ -61,6 +61,7 @@ function MembershipInfo(props) {
                         FK_ClientID: user.ID,
                         Status: 1,
                         FK_MembershipTypeID: props.memberships[0].FK_MembershipTypeID,
+                        Description: `${user.Name} ${user.Surname} - Uplata članarine, tip: ${props.memberships[0]["Membership Type"]}`
                     },
                     {
                         withCredentials: true,
@@ -84,7 +85,10 @@ function MembershipInfo(props) {
                         )
                         .then((res) => {
                             showSnackbarMessage("success", "Successfully renewed a membership")();
-                        });
+                        }).finally(() => {
+                            props.setMemBought(true);
+                        })
+
                 })
                 .catch((err) => {
                     showSnackbarMessage("error", "Error while trying to renew a membership")();
@@ -95,7 +99,7 @@ function MembershipInfo(props) {
     return (
         <Box sx={{mt: 4}}>
             <Box sx={{mt: 4, mb: 3, textAlign: 'center'}} >
-                <Typography sx={{fontWeight: 'bold', fontSize: 30, color: theme.palette.primaryGreen.darkGreen}} > 
+                <Typography sx={{...theme.title}} > 
                     Podaci o članarini 
                 </Typography>
             </Box>

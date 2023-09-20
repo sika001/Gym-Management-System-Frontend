@@ -495,7 +495,7 @@ function EmployeeTable(props) {
 
 
         return (
-            <Box sx={{ flexGrow: 1}}>
+            <Box sx={{ mt: 4}}>
 
                 <Box sx={{ display: "flex", flexDirection: "row", marginBottom: 0.3 }}>
 

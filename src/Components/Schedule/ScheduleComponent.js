@@ -80,7 +80,6 @@ function ScheduleComponent(props) {
                                     ? element["Name"] + " " + element["Surname"]
                                     : null, //this is used to display the coach name in the dialog
                             ScheduleID: element["ScheduleID"],
-                            //OVO PROVJERITI
                             "Workout Name": element["Workout Name"],
                             "Workout Type": element["Workout Type"],
                             "FK_WorkoutID": element["FK_WorkoutID"],

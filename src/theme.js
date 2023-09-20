@@ -22,7 +22,7 @@ const theme = createTheme({
     },
 
     title: {
-      fontSize: "24px",
+      fontSize: "25px",
       fontWeight: "bold",
       color: "#004B50",
       textAlign: "center",

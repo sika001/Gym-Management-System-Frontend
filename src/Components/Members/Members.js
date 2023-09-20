@@ -37,9 +37,9 @@ function Members() {
                 member["Workout Name"].toLowerCase().includes(query.toLowerCase()) ||
                 member["Membership Type"].toLowerCase().includes(query.toLowerCase()) ||
                 //ako je status 1, znači da je članarina aktivna, pa provjeravamo da li sadrži riječ "active"
-                (member.Status === 1 && "Active".toLowerCase().includes(query.toLowerCase())) ||
+                (member.Status === 1 && "Aktivna".toLowerCase().includes(query.toLowerCase())) ||
                 //ako je status 0, znači da je članarina istekla, pa provjeravamo da li sadrži riječ "expired"
-                (member.Status === 0 && "Expired".toLowerCase().includes(query.toLowerCase()))
+                (member.Status === 0 && "Istekla".toLowerCase().includes(query.toLowerCase()))
             );
         });
         setFilteredMembers(filtered);
@@ -234,10 +234,10 @@ function Members() {
         //
         setColumns([
             //field je vrijednost koja se nalazi u objektu koji se nalazi u rows, i mora biti identičan sa tom vrijednošću
-            { field: "id", headerName: "No.", width: 40 },
+            { field: "id", headerName: "Br.", width: 40 },
             {
                 field: "FullName", //Name + Surname (definisano u rows)
-                headerName: "Member",
+                headerName: "Član",
                 width: 200,
                 renderCell: (params) => {
                     const member = params.row; //sadrži sve informacije o korisniku u tom redu
@@ -260,22 +260,22 @@ function Members() {
 
             {
                 field: "Phone",
-                headerName: "Phone",
+                headerName: "Broj telefona",
                 width: 120,
             },
             {
                 field: "Workout Name",
-                headerName: "Workout Name",
+                headerName: "Trening",
                 width: 150,
             },
             {
                 field: "Start",
-                headerName: "Start",
+                headerName: "Početak",
                 width: 130,
             },
             {
                 field: "Expiry",
-                headerName: "Expiry",
+                headerName: "Ističe",
                 width: 130,
                 renderCell: (params) => {
                     const expiryDate = params.value; //params.value is the value of the field Expiry
@@ -284,7 +284,7 @@ function Members() {
                         <div>
                             {moment(expiryDate).format("DD MMM YYYY")}
                             <div style={{ fontSize: "12px", color: "gray" }}>
-                                {expiresIn >= 0 ? `${expiresIn} days left` : "Expired"}
+                                {expiresIn >= 0 ? `${expiresIn} dana preostalo` : "Istekla članarina!"}
                             </div>
                         </div>
                     );
@@ -293,12 +293,12 @@ function Members() {
 
             {
                 field: "Membership Type",
-                headerName: "Membership Type",
+                headerName: "Vrsta članarine",
                 width: 150,
             },
             {
                 field: "AtGym", //This indicates the actaul field name
-                headerName: "At Gym", //This is the name that will be displayed in the table header
+                headerName: "U teretani", //This is the name that will be displayed in the table header
                 width: 80,
             },
             {
@@ -307,7 +307,6 @@ function Members() {
                 width: 150,
                 sort: true,
                 renderCell: (params) => {
-                    ///PROVJERITI TREBA LI OVO ILI STATUS; jer je status sad dobar
                     const member = params.row; //params.row is the object that contains all the data for the row
                     const expiryDate = member.Expiry; //Value of the Expiry field
                     const expired = moment(expiryDate).diff(moment(new Date()), "days") < 0; //Number of days until the membership expires

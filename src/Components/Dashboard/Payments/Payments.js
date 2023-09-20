@@ -47,18 +47,16 @@ function Payments(props) {
     });
 
     const cols = [
-        { field: "id", headerName: "No.", width: 100 },
-        { field: "Amount", headerName: "Amount", width: 120 },
-        { field: "Date", headerName: "Date and Time", width: 200 },
-        { field: "Type", headerName: "Type", width: 200 },
-        { field: "Description", headerName: "Description", width: 450 },
+        { field: "id", headerName: "Br.", width: 100 },
+        { field: "Amount", headerName: "Iznos", width: 120 },
+        { field: "Date", headerName: "Datum i vrijeme", width: 200 },
+        { field: "Type", headerName: "Vrsta", width: 200 },
+        { field: "Description", headerName: "Opis", width: 450 },
     ];
 
     useEffect(() => {
         //fetch payments from the server
         console.log("Fetching the clients' transactions...", user.ID);
-        //OVO PROMIJENITI DA DOVLAČI IZ COOKIEA, (AKO JE EMPLYOEE ILI CLIENT)
-        //DODATI USLOV AKO JE EMPLOYEE, onda gađi employee/transaction, ako je client onda client/transaction
 
         // const clientEmployee = user.isClient === 1 ? "client" : "employee"; //if user has FK_ClientID, then he is a client, otherwise he is an employee
         jwtInterceptor
@@ -71,11 +69,10 @@ function Payments(props) {
             .catch((err) => {
                 console.log("Error while trying to get clients' transactions!", err);
             });
-    }, [props.isAgree]); //isAgree is a state is activated when the user renews his membership
+    }, [props.isAgree, props.memBought]); //isAgree is a state is activated when the user renews his membership
 
     useEffect(() => {
         //fetches monthly revenue
-        //DODATI YEAR UNUTAR BODY-a (moguće da će morati da se radi preko posta, a ne geta)
         jwtInterceptor
             .get(`${api_url}/transaction/revenue/1`, { withCredentials: true }) //1 is FK_TransactionTypesID for membership renewal
             .then((res) => {
@@ -187,7 +184,10 @@ function Payments(props) {
     return (
         <>
         {(user.isAdmin === 1 || user.isEmployee) && (
-            <Box sx={{border: '1px solid black', mt: 5}}>
+            <Box sx={{border: '1px solid #E0E0E0', borderRadius: '10px',
+                     boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.2)', mt: 5,
+                        p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center'
+                     }}>
                 {/* Grafik za plaćanja se renderuje jedino za zaposlene i admina */}
                     <>
                         <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
@@ -207,12 +207,12 @@ function Payments(props) {
                     
                         <Box className="money-statistics">
                             <Box className="money-statistics-revenue">
-                                <h3>Ukupni godišnji prihodi</h3>
-                                <h4>{totalRevenue}€</h4>
+                                <h3 style={{color: '#637381'}}>Ukupni godišnji prihodi</h3>
+                                <h4 style={{color: '#637381', textAlign: 'center'}}>{totalRevenue}€</h4>
                             </Box>
                             <Box className="money-statistics-expenses">
-                                <h3>Ukupni godišnji rashodi</h3>
-                                <h4>{totalExpenses}€</h4>
+                                <h3 style={{color: '#637381'}}>Ukupni godišnji rashodi</h3>
+                                <h4 style={{color: '#637381', textAlign: 'center'}}>{totalExpenses}€</h4>
                             </Box>
                         </Box>
                     </>

@@ -2,7 +2,6 @@ import Login from "./Components/Login/Login";
 import EditPersonalInfo from "./Components/EditPersonal_Info/EditPersonalInfo";
 import Members from "./Components/Members/Members";
 import Register from "./Components/Register/Register";
-import Error from "./Components/Error/Error";
 import AppLayout from "./Components/App Layout/App-layout";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import React from "react";
@@ -16,7 +15,7 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
             {
-                path: "/",
+                path: "/*",
                 element: (
                     <ProtectedRoute accessBy="non-authenticated">
                         <Login />{" "}
@@ -102,14 +101,6 @@ const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute accessBy="authenticated">
                         <Schedule />{" "}
-                    </ProtectedRoute>
-                ),
-            },
-            {
-                path: "/*",
-                element: (
-                    <ProtectedRoute accessBy="non-authenticated">
-                        <Error />{" "}
                     </ProtectedRoute>
                 ),
             },

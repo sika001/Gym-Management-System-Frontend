@@ -13,7 +13,6 @@ function Attendance(props) {
     const { user } = useContext(AuthContext);
     const api_url = process.env.REACT_APP_API_URL;
 
-    // const [isLoading, setIsLoading] = useState(false);
     const [arrivalData, setArrivalData] = useState(null);
     const [chartData, setChartData] = useState(null);
 
@@ -26,8 +25,7 @@ function Attendance(props) {
     useEffect(() => {
         async function getArrivals() {
             //returns all arrivals for a user in a certain time period
-            // setIsLoading(true);
-            const url = !user.isClient ? `${api_url}/arrival/get/all` : `${api_url}/arrival/get`;
+            const url = user.isClient === 0 ? `${api_url}/arrival/get/all` : `${api_url}/arrival/get`;
             console.log("Start date:", dateStart, "End date:", dateEnd);
             await jwtInterceptor
                 .post(
@@ -47,16 +45,11 @@ function Attendance(props) {
                 .catch((err) => {
                     console.log(err);
                 })
-                .finally(() => {
-                    // setIsLoading(false);
-                });
-
 
         }
 
         async function getClientsMembership() {
             //returns clients membership details
-            // setIsLoading(true);
             await jwtInterceptor
                 .get(
                     `${api_url}/membership/${user.ID}`, //represents arrival time of a user
@@ -70,7 +63,6 @@ function Attendance(props) {
 
                     //get employee details
                     res.data.forEach((memEl) => {
-                        //TESTIRATI OVAJ DIO SA NEKIM KO JE NA PERSONALNI TRENING ILI GRUPNI
                         if (memEl.FK_EmployeeID !== null) {
                             jwtInterceptor
                                 .get(
@@ -85,31 +77,25 @@ function Attendance(props) {
                                 .catch((err) => {
                                     console.log(err);
                                 })
-                                .finally(() => {
-                                    // setIsLoading(false);
-                                });
 
                         }
                     });
                 })
                 .catch((err) => {
                     console.log(err);
-                }).finally(() => {
-                    // setIsLoading(false);
-                });
+                })
         }
 
         getClientsMembership();
         getArrivals();
-    }, [user, dateStart, dateEnd]);
+    }, [user, dateStart, dateEnd, props.memBought]);
 
     const handleAverageTimeSpent = (minutes) => {
         setAverageTimeSpent((prevTimeSpent) => prevTimeSpent + minutes);
     };
 
     useEffect(() => {
-        // if (!arrivalData || isLoading) return;
-        if (!arrivalData) return; //VRAITI OVO KAD SE SREDI LOADER
+        if (!arrivalData) return; 
         //creating the chart
         setAverageTimeSpent(0); //resetting average time spent
         console.log("Arrival data:", arrivalData);
@@ -117,7 +103,7 @@ function Attendance(props) {
             labels: arrivalData.map((arrData) => {
                         //x-axis
                         const day = new Date(arrData.Day).getDate();
-                        // const dayWithoutZeros = day.toString().replace(/^0+/, ""); // if a day is 01, it will be converted to 1
+
                         return day;
                     }),
             datasets: [
@@ -151,15 +137,11 @@ function Attendance(props) {
     };
 
 
-    // if (isLoading) {
-    //     return <Loader />
-    // }
-
     return (
         <Box  className="attendance-container"  
             sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', 
                 border: '1px solid #E0E0E0', borderRadius: '10px',
-                // boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.2)',
+                boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.2)',
             }}
         >
             <Typography variant="h4" sx={{m: 3, ...theme.title}} >

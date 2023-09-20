@@ -3,6 +3,7 @@ import jwtInterceptor from "../../Utilities/Interceptors/jwtInterceptor";
 import { useEffect, useState } from "react";
 import Loader from "../../Utilities/Loader/Loader";
 import { useSnackbar } from "notistack";
+import { Box } from "@mui/material";
 
 function Schedule() {
     const [employeeWorkouts, setEmployeeWorkouts] = useState([]); //contains info about personal coaches, their workouts and time schedules
@@ -55,8 +56,8 @@ function Schedule() {
     }, [fetchData]);
 
     return (
-        <div className="schedule-container">
-            <div className="schedule-content">
+        <Box className="schedule-container" sx={{mt: 4}}>
+            <Box className="schedule-content">
                 {isLoading ? (
                     <Loader />
                 ) : (
@@ -67,8 +68,8 @@ function Schedule() {
                         showSnackbarMessage={showSnackbarMessage}
                     />
                 )}
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 }
 

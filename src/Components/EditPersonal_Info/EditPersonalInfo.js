@@ -260,7 +260,7 @@ function EditPersonalInfo(props) {
                 xl={10} 
                 sx={{display: 'flex', flexDirection: 'column', alignItems: 'center',
                     marginTop: '50px', marginBottom:'50px', padding: '20px', backgroundColor: 'white',
-                    borderRadius: '10px', boxShadow: '0 0 10px rgba(0,0,0,0.5)',
+                    borderRadius: '10px', boxShadow: '0px 0px 10px 0px rgba(0,0,0,0.2)',
                 "& > *": {ml: 'auto', mr: 'auto', width: '100%'}} //centrira sve elemente unutar grid containera (potomke)
                 } 
                 spacing={2}
@@ -271,7 +271,6 @@ function EditPersonalInfo(props) {
                     {/* Slika zaposlenog */}
                     <div style={{ position: 'relative', width: 160, height: 160, ml: 'auto', mr: 'auto' }}>
                         <Avatar
-                        ///NAPRAVITI OVO DA SE SLIKA PRIKAZUJE
                         src={`${api_url}/uploads/${editUser.Picture}`}
                         alt={editUser.Name + " " + editUser.Surname}
                         sx={{
@@ -296,7 +295,6 @@ function EditPersonalInfo(props) {
                             <AddAPhotoIcon />
                         </IconButton>
                        
-                            {/* <p>{file ? file.name : "Nijedna slika nije selektovana"}</p> */}
                     </div>
                         {/* DON'T TOUCH name: Picture (need to be the same as the one on the backend in muler-config.js)*/}
                         <input
@@ -314,7 +312,7 @@ function EditPersonalInfo(props) {
                             // className="formclass"
                             sx={{width: '100%'}} //width: '100%' čini da  input forma popuni cijeli grid item
                             name="nameForm"
-                            label="Name"
+                            label="Ime"
                             onChange={handleNameChange}
                             onBlur={handleBlur}
                             value={name}
@@ -328,7 +326,7 @@ function EditPersonalInfo(props) {
                             // className="formclass"
                             sx={{width: '100%'}}
                             name="surnameForm"
-                            label="Surname"
+                            label="Prezime"
                             onChange={handleSurnameChange}
                             onBlur={handleBlur}
                             value={surname}
@@ -343,7 +341,7 @@ function EditPersonalInfo(props) {
                             date={dayjs(date)}
                             handleDateChange={handleDateChange}
                             // className={"formclass"}
-                            label={"Date of birth"}
+                            label={"Datum rođenja"}
                             disabled={true}
                             disableFuture={true}
                             disablePast={false}
@@ -354,7 +352,7 @@ function EditPersonalInfo(props) {
                             // className="formclass"
                             sx={{width: '100%'}}
                             name="phoneForm"
-                            label="Phone number"
+                            label="Broj telefona"
                             onChange={handlePhoneChange}
                             onBlur={handleBlur}
                             value={phone}
@@ -366,7 +364,7 @@ function EditPersonalInfo(props) {
                             // className="formclass"
                             sx={{width: '100%'}}
                             name="addressForm"
-                            label="Address"
+                            label="Adresa"
                             onChange={handleAddressChange}
                             onBlur={handleBlur}
                             value={address}
@@ -390,7 +388,7 @@ function EditPersonalInfo(props) {
                             sx={{width: '100%'}}
                             // className="formclass"
                             name="passwordForm"
-                            label="New Password"
+                            label="Nova šifra"
                             type="password"
                             onChange={handlePasswordChange}
                             // onBlur={handleBlur}
@@ -403,7 +401,7 @@ function EditPersonalInfo(props) {
                             // className="formclass"
                             sx={{width: '100%'}}
                             name="confirmPasswordForm"
-                            label="Confirm Password"
+                            label="Potvrdi šifru"
                             type="password"
                             onChange={handleConfirmPasswordChange}
                             onBlur={handleBlur}
@@ -434,7 +432,7 @@ function EditPersonalInfo(props) {
                                         !isValidConfirmPassword))
                             }
                         >
-                            Update
+                            Ažuriraj
                         </Button>
                     </Grid>
             </Grid>

@@ -83,17 +83,20 @@ function SideBar() {
                     <div className="text">Članovi</div>
                 </div>
             </Link>
-
-            <Link to={"/employees"} className="link-container">
-                <div
-                    className="employees"
-                    onMouseEnter={handleHoverEmployees}
-                    onMouseLeave={handleHoverEmployees}
-                >
-                    <img src={isHoveredEmployees ? employees1 : employees2} alt="employees-icon" />
-                    <div className="text">Zaposleni</div>
-                </div>
-            </Link>
+                
+            {user.isAdmin || user.isEmployee ?
+                <Link to={"/employees"} className="link-container">
+                    <div
+                        className="employees"
+                        onMouseEnter={handleHoverEmployees}
+                        onMouseLeave={handleHoverEmployees}
+                        >
+                        <img src={isHoveredEmployees ? employees1 : employees2} alt="employees-icon" />
+                        <div className="text">Zaposleni</div>
+                    </div>
+                </Link>
+                : null
+            }
 
             <Link to={"/account"} className="link-container">
                 <div

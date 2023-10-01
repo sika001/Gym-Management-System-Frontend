@@ -46,6 +46,7 @@ function ScheduleComponent(props) {
         return newStartDate;
     };
 
+    
     useEffect(() => {
         setIsLoading(true);
         //loading events from the database
@@ -57,6 +58,8 @@ function ScheduleComponent(props) {
             if (!element["isRecurring"]) {
                 //if the event is non-recurring, it is added to the non-recurring events array
                 console.log("NON RECURRING EVENT FOUND", element);
+                const RRuleDayMapping = { 0: 'SU', 1: 'MO', 2:'TU', 3:'WE', 4: 'TH', 5: 'FR', 6: 'SA'}
+                console.log("DAY OF WEEK", element["DayOfWeek"],"MAPIRANJE: ",  RRuleDayMapping[element["DayOfWeek"]]);
 
                 const newStartDate = changeDatesTime(element["StartDate"], element["StartTime"]);
                 const newEndDate = changeDatesTime(element["StartDate"], element["EndTime"]);
@@ -158,6 +161,7 @@ function ScheduleComponent(props) {
 
     const handleNewEventCreate = () => {
         setIsCreatingNewEvent(true);
+        setIsEditingEvent(false);
 
         handleDialogOpen(); //opens the dialog for adding a new event
     };
@@ -231,7 +235,7 @@ function ScheduleComponent(props) {
         setPopoverText(" "); // Set popover text on event mouse enter
         setPopoverCoach(" "); //sets coach name and surname into a stat
 
-        // setIsLoading(false);
+        setIsLoading(false);
     };
 
     const handleEditedEventNameChange = (event) => {
@@ -565,20 +569,20 @@ function ScheduleComponent(props) {
 
     const handleAgree = () => {
         //Dugme za potvrdu u Dialogu
+        //ovaj dio koda se koristi za prikazivanje dialoga za dodavanje i editovanje eventa
+        //dodavanje
         setIsAgree(true);
         setIsReadOnlyEvent(false);
-        setIsEditingEvent(true);
-        setIsCreatingNewEvent(false); //VIDI TREBA LI OVO
+        setIsCreatingNewEvent(true);
 
-        console.log(
-            "AGREE btn clicked",
-            "isCreatingNewEvent",
-            isCreatingNewEvent,
-            "isEditingEvent",
-            isEditingEvent,
-            "isReadOnlyEvent",
-            isReadOnlyEvent
-        );
+        //editovanje
+        if(popoverText.length > 1){
+            //po defaultu (jer Calendar komponenta zahtijeva) stavio sam da popover text sadrži razmak
+            //ako je razmak, onda je to novi event, ako nije, onda je edit postojećeg eventa
+            setIsEditingEvent(true);
+            setIsCreatingNewEvent(false);
+        }
+
     };
 
     const handleBlur = () => {
@@ -641,8 +645,6 @@ function ScheduleComponent(props) {
                 props.handleSetFetchData(true); //force a re-render of the calendar, by changing the state in the parent component and fetching the data again
             });
     };
-
-    const renderedWorkouts = [];
 
     if (isLoading) return <Loader />;
 
@@ -727,15 +729,22 @@ function ScheduleComponent(props) {
                             user.isClient === 0 && (isCreatingNewEvent || isEditingEvent) ? (
                                 // {/* Kreiranje ili editovanje događaja (u zavisnosti od isCreatingNewEvent)*/}
                                 <AddEditEventComponent
-                                    popoverText={popoverText}
-                                    popoverStartDate={popoverStartDate}
-                                    popoverEndDate={popoverEndDate}
-                                    isChecked={isChecked}
-                                    handleEditedEventNameChange={handleEditedEventNameChange}
+                                    popoverText={isCreatingNewEvent ? newPopoverText : popoverText}
+                                    popoverStartDate={isCreatingNewEvent ? startEventDate : popoverStartDate }
+                                    popoverEndDate={isCreatingNewEvent ? endEventDate : popoverEndDate}
+                                    isChecked={isChecked} 
+                                    handleEditedEventNameChange={isCreatingNewEvent ? 
+                                                                handleNewEventNameChange :
+                                                                handleEditedEventNameChange
+                                                                }
                                     handleEditedEventStartDateChange={
+                                        isCreatingNewEvent ?
+                                        handleStartEventDateTimeChange :
                                         handleEditedEventStartDateChange
                                     }
                                     handleEditedEventEndDateChange={
+                                        isCreatingNewEvent ?
+                                        handleEndEventDateTimeChange :
                                         handleEditedEventEndDateChange
                                     }
                                     handleCheckbox={handleCheckbox}
@@ -746,7 +755,7 @@ function ScheduleComponent(props) {
                                     handleBlur={handleBlur}
                                     popoverIsRecurring={popoverIsRecurring} //ovo je default vrijednost checkboxa (da li je event recurring ili ne)
                                     isCreatingNewEvent={isCreatingNewEvent}
-                                    isEditingEvent={isEditingEvent}    
+                                    isEditingEvent={isEditingEvent && !isCreatingNewEvent}    
                                 />
                                 
                             ) : (
@@ -765,7 +774,9 @@ function ScheduleComponent(props) {
                         }
                         disagree={"Otkaži"}
                         agree={isCreatingNewEvent ? "Dodaj" : isReadOnlyEvent ? "Izmijeni" : "Sačuvaj izmjene"}
-                        handleAgree={isEditingEvent ? handleUpdateEvent : handleAgree}
+                        handleAgree={isCreatingNewEvent ? handleAgree :  
+                                        isEditingEvent ? handleUpdateEvent : handleAgree
+                        }
                         showButton={false}
                         disableAgreeBtn={user.isClient === 1}
                     />

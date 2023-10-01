@@ -61,7 +61,7 @@ function AddEditEventComponent({
                 onChange={handleEditedEventNameChange}
                 value={popoverText}
                 onBlur={handleBlur}
-                error={popoverText.length > 1 && isBlured}
+                error={popoverText.length <= 1 && isBlured}
             />
             <DateTimePickerComponent
                 label={"Odaberite datum početka"}

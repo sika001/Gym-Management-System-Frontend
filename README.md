@@ -1,4 +1,36 @@
-# Getting Started with Create React App
+# Gym Management System (FRONTEND)
+
+#### This is a repository made for the frontend of the Gym Management App
+
+#### Technologies used: React
+
+Implemented various features including:
+  1. Log-in and register (RegExp used for form validation)
+  3. Dashboard :
+       - Attendence Bar-chart:
+           - Total time spent in gym (when an employee is logged in)
+           - Client's time spent in gym (when a client is logged in)
+       - Graph of income and expenses (when admin is logged in)
+       - Membership Renewal (when a client is logged in)
+       - Transactions table
+  4. Members table:
+       - Adding, removing and modifying members
+       - Checking in/out
+       - Member search based on substrings, including name, surname, phone number or workout.
+  5. Employees table:
+      - Adding, removing and modifying members
+      - Payout salary (only available once a month)
+      - Employee search based on substrings, including name, surname, phone number or role.
+      - Restoring a deleted employee
+      - Double click the row, to edit an employee
+  6. Logged in user:
+     - modifying personal information
+     - loggin out
+  7. Interceptors:
+       - if a request is not authorized (401 error), generates a new refresh token and requests again
+       - authorized request are passed
+
+
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

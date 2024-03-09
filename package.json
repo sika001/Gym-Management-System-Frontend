@@ -50,7 +50,7 @@
     "moment": "^2.29.4",
     "notistack": "^3.0.1",
     "path-browserify": "^1.0.1",
-    "postcss": "^8.4.4",
+    "postcss": "^8.4.31",
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-loader": "^6.2.1",
     "postcss-normalize": "^10.0.1",
